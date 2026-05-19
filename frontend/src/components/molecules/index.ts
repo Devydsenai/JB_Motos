@@ -1,5 +1,10 @@
 export { SearchBar } from "./SearchBar";
 export { NavItem } from "./NavItem";
+export { NavItemGroup } from "./NavItemGroup";
 export { DropdownMenu } from "./DropdownMenu";
 export { AlertBadge } from "./AlertBadge";
 export { PagePlaceholder } from "./PagePlaceholder";
+export { StatCard } from "./StatCard";
+export { ThemeToggle } from "./ThemeToggle";
+export { AccountAvatar } from "./AccountAvatar";
+export { StatusBadge } from "./StatusBadge";

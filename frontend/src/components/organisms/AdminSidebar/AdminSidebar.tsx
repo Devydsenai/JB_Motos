@@ -1,9 +1,11 @@
 import { NavLink } from "react-router-dom";
 import styled from "styled-components";
 import { NavItem } from "@components/molecules/NavItem";
+import { NavItemGroup } from "@components/molecules/NavItemGroup";
 import { Text } from "@components/atoms/Text";
 import { Icon } from "@components/atoms/Icon";
 import { adminRoutes } from "@/config/adminMenu";
+import { useSidebar } from "@/contexts/SidebarContext";
 
 const Aside = styled.aside<{ $collapsed?: boolean }>`
   width: ${({ theme, $collapsed }) =>
@@ -14,28 +16,70 @@ const Aside = styled.aside<{ $collapsed?: boolean }>`
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  transition: width 0.2s;
+  transition: width 0.25s ease;
+  overflow: visible;
 `;
 
-const Brand = styled.div<{ $collapsed?: boolean }>`
+const BrandButton = styled.button<{ $collapsed?: boolean }>`
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  width: 100%;
   padding: 1.25rem 1rem;
+  border: none;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
 
-  span {
-    font-weight: 700;
-    font-size: 1.1rem;
-    color: #fff;
-    ${({ $collapsed }) => $collapsed && "display: none;"}
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
   }
+
+  ${({ $collapsed }) =>
+    $collapsed &&
+    `
+    justify-content: center;
+    padding: 1.25rem 0.5rem;
+  `}
 `;
 
-const Nav = styled.nav`
+const BrandText = styled.span<{ $collapsed?: boolean }>`
   flex: 1;
-  padding: 1rem 0.5rem;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  opacity: ${({ $collapsed }) => ($collapsed ? 0 : 1)};
+  width: ${({ $collapsed }) => ($collapsed ? 0 : "auto")};
+  transition: opacity 0.2s ease;
+`;
+
+const BrandChevron = styled.span<{ $collapsed?: boolean }>`
+  display: flex;
+  align-items: center;
+  opacity: ${({ $collapsed }) => ($collapsed ? 0 : 1)};
+  width: ${({ $collapsed }) => ($collapsed ? 0 : "auto")};
+  overflow: hidden;
+  transition: opacity 0.2s ease;
+`;
+
+const Nav = styled.nav<{ $collapsed?: boolean }>`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: visible;
+`;
+
+const NavScroll = styled.div<{ $collapsed?: boolean }>`
+  flex: 1;
+  padding: 1rem ${({ $collapsed }) => ($collapsed ? "0.35rem" : "0.5rem")};
   overflow-y: auto;
+  overflow-x: visible;
 
   ul {
     display: flex;
@@ -44,14 +88,15 @@ const Nav = styled.nav`
   }
 `;
 
-const Footer = styled.div`
-  padding: 1rem;
+const Footer = styled.div<{ $collapsed?: boolean }>`
+  padding: ${({ $collapsed }) => ($collapsed ? "0.75rem 0.35rem" : "1rem")};
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 `;
 
-const StoreLink = styled(NavLink)`
+const StoreLink = styled(NavLink)<{ $collapsed?: boolean }>`
   display: flex;
   align-items: center;
+  justify-content: ${({ $collapsed }) => ($collapsed ? "center" : "flex-start")};
   gap: 0.75rem;
   padding: 0.65rem 1rem;
   border-radius: ${({ theme }) => theme.radius.md};
@@ -63,21 +108,72 @@ const StoreLink = styled(NavLink)`
     background: rgba(255, 255, 255, 0.08);
     color: #fff;
   }
+
+  ${({ $collapsed }) =>
+    $collapsed &&
+    `
+    padding: 0.65rem;
+  `}
 `;
 
-export interface AdminSidebarProps {
-  collapsed?: boolean;
-}
+const estoqueItems = [
+  {
+    to: adminRoutes.estoqueEntrada,
+    icon: "box-arrow-in-down",
+    label: "Entrada",
+  },
+  { to: adminRoutes.estoqueSaida, icon: "box-arrow-up", label: "Saída" },
+  {
+    to: adminRoutes.estoqueAdicionar,
+    icon: "plus-circle",
+    label: "Adicionar produto",
+  },
+];
 
-export function AdminSidebar({ collapsed = false }: AdminSidebarProps) {
+const clientesItems = [
+  { to: adminRoutes.clientesLista, icon: "people", label: "Lista de clientes" },
+  {
+    to: adminRoutes.clientesSolicitacoes,
+    icon: "inbox",
+    label: "Solicitações e pedidos",
+  },
+];
+
+const cadastrosItems = [
+  { to: adminRoutes.cadastroProdutos, icon: "tag", label: "Produtos" },
+  {
+    to: adminRoutes.cadastroFornecedores,
+    icon: "truck",
+    label: "Fornecedores",
+  },
+];
+
+export function AdminSidebar() {
+  const { collapsed, toggleCollapsed } = useSidebar();
+
   return (
     <Aside $collapsed={collapsed}>
-      <Brand $collapsed={collapsed}>
+      <BrandButton
+        type="button"
+        onClick={toggleCollapsed}
+        $collapsed={collapsed}
+        title={collapsed ? "Expandir menu" : "Recolher menu"}
+        aria-label={collapsed ? "Expandir menu lateral" : "Recolher menu lateral"}
+        aria-expanded={!collapsed}
+      >
         <Icon name="wrench-adjustable" size={28} color="#c41e1e" />
-        {!collapsed && <span>JB Motos</span>}
-      </Brand>
+        <BrandText $collapsed={collapsed}>JB Motos</BrandText>
+        <BrandChevron $collapsed={collapsed} aria-hidden>
+          <Icon
+            name={collapsed ? "chevron-right" : "chevron-left"}
+            size={16}
+            color="currentColor"
+          />
+        </BrandChevron>
+      </BrandButton>
 
       <Nav aria-label="Menu administrativo">
+        <NavScroll $collapsed={collapsed}>
         <ul>
           <NavItem
             to={adminRoutes.dashboard}
@@ -92,35 +188,20 @@ export function AdminSidebar({ collapsed = false }: AdminSidebarProps) {
             label="Produtos"
             collapsed={collapsed}
           />
-          <NavItem
-            to={adminRoutes.estoque}
-            icon="archive"
-            label="Estoque"
+          <NavItemGroup
+            label="Clientes"
+            icon="person-badge"
+            matchPaths={[adminRoutes.clientes]}
+            items={clientesItems}
             collapsed={collapsed}
-          >
-            {!collapsed && (
-              <>
-                <NavItem
-                  to={adminRoutes.estoqueEntrada}
-                  icon="box-arrow-in-down"
-                  label="Entrada"
-                  collapsed={collapsed}
-                />
-                <NavItem
-                  to={adminRoutes.estoqueSaida}
-                  icon="box-arrow-up"
-                  label="Saída"
-                  collapsed={collapsed}
-                />
-                <NavItem
-                  to={adminRoutes.estoqueAdicionar}
-                  icon="plus-circle"
-                  label="Adicionar produto"
-                  collapsed={collapsed}
-                />
-              </>
-            )}
-          </NavItem>
+          />
+          <NavItemGroup
+            label="Estoque"
+            icon="archive"
+            matchPaths={[adminRoutes.estoque]}
+            items={estoqueItems}
+            collapsed={collapsed}
+          />
           <NavItem
             to={adminRoutes.requisicoes}
             icon="clipboard-check"
@@ -139,29 +220,13 @@ export function AdminSidebar({ collapsed = false }: AdminSidebarProps) {
             label="Financeiro"
             collapsed={collapsed}
           />
-          <NavItem
-            to={adminRoutes.cadastros}
-            icon="folder-plus"
+          <NavItemGroup
             label="Cadastros"
+            icon="folder-plus"
+            matchPaths={[adminRoutes.cadastros]}
+            items={cadastrosItems}
             collapsed={collapsed}
-          >
-            {!collapsed && (
-              <>
-                <NavItem
-                  to={adminRoutes.cadastroProdutos}
-                  icon="tag"
-                  label="Produtos"
-                  collapsed={collapsed}
-                />
-                <NavItem
-                  to={adminRoutes.cadastroFornecedores}
-                  icon="truck"
-                  label="Fornecedores"
-                  collapsed={collapsed}
-                />
-              </>
-            )}
-          </NavItem>
+          />
           <NavItem
             to={adminRoutes.administrativo}
             icon="shield-lock"
@@ -169,10 +234,15 @@ export function AdminSidebar({ collapsed = false }: AdminSidebarProps) {
             collapsed={collapsed}
           />
         </ul>
+        </NavScroll>
       </Nav>
 
-      <Footer>
-        <StoreLink to={adminRoutes.loja} title="Voltar para a loja">
+      <Footer $collapsed={collapsed}>
+        <StoreLink
+          to={adminRoutes.loja}
+          $collapsed={collapsed}
+          title="Voltar para a loja"
+        >
           <Icon name="shop" size={18} color="currentColor" />
           {!collapsed && <span>Voltar para a loja</span>}
         </StoreLink>

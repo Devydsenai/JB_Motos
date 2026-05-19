@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { SearchBar } from "@components/molecules/SearchBar";
 import { AlertBadge } from "@components/molecules/AlertBadge";
 import { DropdownMenu } from "@components/molecules/DropdownMenu";
+import { ThemeToggle } from "@components/molecules/ThemeToggle";
 import { Text } from "@components/atoms/Text";
 import { adminRoutes, MOCK_ALERTAS_ESTOQUE } from "@/config/adminMenu";
 
@@ -66,6 +67,7 @@ export function AdminHeader({ title = "Painel Administrativo" }: AdminHeaderProp
       </SearchWrap>
 
       <Actions>
+        <ThemeToggle />
         <AlertBadge
           to={adminRoutes.requisicoes}
           icon="exclamation-triangle-fill"
@@ -82,21 +84,12 @@ export function AdminHeader({ title = "Painel Administrativo" }: AdminHeaderProp
           label="Menu"
           icon="list"
           items={[
-            { label: "Meu perfil", icon: "person", onClick: () => {} },
             { label: "Configurações", icon: "gear", onClick: () => {} },
             {
               label: "Voltar para a loja",
               icon: "shop",
               href: adminRoutes.loja,
             },
-          ]}
-        />
-        <DropdownMenu
-          label="Admin"
-          icon="person-circle"
-          items={[
-            { label: "Usuários e perfis", icon: "people", onClick: () => {} },
-            { label: "Sair", icon: "box-arrow-right", onClick: () => {} },
           ]}
         />
       </Actions>

@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import styled from "styled-components";
 import { AdminSidebar } from "@components/organisms/AdminSidebar";
 import { AdminHeader } from "@components/organisms/AdminHeader";
+import { SidebarProvider } from "@/contexts/SidebarContext";
 
 const Layout = styled.div`
   display: flex;
@@ -23,14 +24,16 @@ const Content = styled.main`
 
 export function AdminTemplate() {
   return (
-    <Layout>
-      <AdminSidebar />
-      <Main>
-        <AdminHeader />
-        <Content>
-          <Outlet />
-        </Content>
-      </Main>
-    </Layout>
+    <SidebarProvider>
+      <Layout>
+        <AdminSidebar />
+        <Main>
+          <AdminHeader />
+          <Content>
+            <Outlet />
+          </Content>
+        </Main>
+      </Layout>
+    </SidebarProvider>
   );
 }

@@ -14,7 +14,12 @@ import { CadastrosPage } from "@pages/admin/CadastrosPage";
 import { CadastroProdutosPage } from "@pages/admin/CadastroProdutosPage";
 import { CadastroFornecedoresPage } from "@pages/admin/CadastroFornecedoresPage";
 import { AdministrativoPage } from "@pages/admin/AdministrativoPage";
+import {
+  ClientesListaPage,
+  ClientesSolicitacoesPage,
+} from "@pages/admin/ClientesPage";
 import { LojaHomePage } from "@pages/store/LojaHomePage";
+import { MinhaContaPage } from "@pages/store/MinhaContaPage";
 
 export function AppRoutes() {
   return (
@@ -24,6 +29,12 @@ export function AppRoutes() {
       <Route path="/admin" element={<AdminTemplate />}>
         <Route index element={<DashboardPage />} />
         <Route path="produtos" element={<ProdutosPage />} />
+        <Route path="clientes" element={<Navigate to="clientes/lista" replace />} />
+        <Route path="clientes/lista" element={<ClientesListaPage />} />
+        <Route
+          path="clientes/solicitacoes"
+          element={<ClientesSolicitacoesPage />}
+        />
         <Route path="estoque" element={<EstoquePage />} />
         <Route path="estoque/entrada" element={<EstoqueEntradaPage />} />
         <Route path="estoque/saida" element={<EstoqueSaidaPage />} />
@@ -42,6 +53,7 @@ export function AppRoutes() {
 
       <Route path="/loja" element={<StoreTemplate />}>
         <Route index element={<LojaHomePage />} />
+        <Route path="minha-conta" element={<MinhaContaPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/admin" replace />} />

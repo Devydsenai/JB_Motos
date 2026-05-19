@@ -4,6 +4,9 @@ export const ADMIN_BASE = "/admin";
 export const adminRoutes = {
   dashboard: `${ADMIN_BASE}`,
   produtos: `${ADMIN_BASE}/produtos`,
+  clientes: `${ADMIN_BASE}/clientes`,
+  clientesLista: `${ADMIN_BASE}/clientes/lista`,
+  clientesSolicitacoes: `${ADMIN_BASE}/clientes/solicitacoes`,
   estoque: `${ADMIN_BASE}/estoque`,
   estoqueEntrada: `${ADMIN_BASE}/estoque/entrada`,
   estoqueSaida: `${ADMIN_BASE}/estoque/saida`,

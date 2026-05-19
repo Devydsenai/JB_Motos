@@ -1,7 +1,6 @@
 import { NavLink } from "react-router-dom";
 import styled, { css } from "styled-components";
 import { Icon } from "@components/atoms/Icon";
-import type { ReactNode } from "react";
 
 const linkStyles = css<{ $collapsed?: boolean }>`
   display: flex;
@@ -35,19 +34,12 @@ const StyledNavLink = styled(NavLink)<{ $collapsed?: boolean }>`
   ${linkStyles}
 `;
 
-const SubList = styled.ul`
-  margin-left: 1rem;
-  padding-left: 0.5rem;
-  border-left: 1px solid rgba(255, 255, 255, 0.12);
-`;
-
 export interface NavItemProps {
   to: string;
   icon: string;
   label: string;
   collapsed?: boolean;
   end?: boolean;
-  children?: ReactNode;
 }
 
 export function NavItem({
@@ -56,7 +48,6 @@ export function NavItem({
   label,
   collapsed = false,
   end,
-  children,
 }: NavItemProps) {
   return (
     <li>
@@ -64,7 +55,6 @@ export function NavItem({
         <Icon name={icon} size={18} color="currentColor" />
         {!collapsed && <span>{label}</span>}
       </StyledNavLink>
-      {!collapsed && children && <SubList>{children}</SubList>}
     </li>
   );
 }

@@ -1,18 +1,17 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import { ThemeProvider } from "styled-components";
 import App from "./App";
 import { GlobalStyle } from "./styles/GlobalStyle";
-import { theme } from "./styles/theme";
+import { AppThemeProvider } from "./contexts/ThemeContext";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ThemeProvider theme={theme}>
+    <AppThemeProvider>
       <GlobalStyle />
       <BrowserRouter>
         <App />
       </BrowserRouter>
-    </ThemeProvider>
+    </AppThemeProvider>
   </StrictMode>,
 );

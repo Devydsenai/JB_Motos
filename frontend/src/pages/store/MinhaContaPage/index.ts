@@ -1,0 +1,1 @@
+export { MinhaContaPage } from "./MinhaContaPage";
