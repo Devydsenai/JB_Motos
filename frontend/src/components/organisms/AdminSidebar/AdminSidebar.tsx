@@ -125,8 +125,8 @@ const estoqueItems = [
   { to: adminRoutes.estoqueSaida, icon: "box-arrow-up", label: "Saída" },
   {
     to: adminRoutes.estoqueAdicionar,
-    icon: "plus-circle",
-    label: "Adicionar produto",
+    icon: "arrow-left-right",
+    label: "Movimentações",
   },
 ];
 
