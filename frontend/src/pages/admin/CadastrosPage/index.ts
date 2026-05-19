@@ -1,0 +1,1 @@
+export { CadastrosPage } from "./CadastrosPage";

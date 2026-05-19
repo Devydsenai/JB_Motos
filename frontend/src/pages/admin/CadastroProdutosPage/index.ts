@@ -1,0 +1,1 @@
+export { CadastroProdutosPage } from "./CadastroProdutosPage";

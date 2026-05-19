@@ -1,0 +1,1 @@
+export { AdministrativoPage } from "./AdministrativoPage";

@@ -1,0 +1,1 @@
+export { RequisicoesPage } from "./RequisicoesPage";
