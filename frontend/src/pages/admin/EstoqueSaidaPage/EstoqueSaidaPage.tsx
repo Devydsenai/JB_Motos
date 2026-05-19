@@ -1,4 +1,5 @@
 import { Icon } from "@components/atoms/Icon";
+import { exportReport } from "@/utils/exportReports";
 import {
   ActionButton,
   IconButton,
@@ -106,6 +107,37 @@ const resumoSaida = [
 ];
 
 export function EstoqueSaidaPage() {
+  const exportarSaidas = () => {
+    exportReport({
+      title: "Relatório de saídas do estoque por serviço",
+      fileName: "relatorio-saidas-estoque",
+      columns: [
+        "Data/hora",
+        "Tipo",
+        "Produto / peça",
+        "Código",
+        "Quantidade",
+        "Estoque atual",
+        "Serviço",
+        "Moto",
+        "Responsável",
+        "Motivo",
+      ],
+      rows: saidasIniciais.map((saida) => [
+        saida.data,
+        "Saída",
+        saida.produto,
+        saida.codigo,
+        saida.quantidade,
+        saida.estoqueAtual,
+        saida.servico,
+        saida.moto,
+        saida.responsavel,
+        saida.motivo,
+      ]),
+    });
+  };
+
   return (
     <Page>
       <SummaryGrid>
@@ -127,7 +159,7 @@ export function EstoqueSaidaPage() {
           <h1>Saída do estoque</h1>
           <p>Peças que saíram do estoque após conclusão de serviço</p>
         </div>
-        <ActionButton type="button">
+        <ActionButton type="button" onClick={exportarSaidas}>
           <Icon name="file-earmark-arrow-up" size={14} color="#fff" />
           Exportar
         </ActionButton>

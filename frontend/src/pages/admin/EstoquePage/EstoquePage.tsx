@@ -1,4 +1,5 @@
 import { Icon } from "@components/atoms/Icon";
+import { exportReport } from "@/utils/exportReports";
 import {
   ActionButton,
   Page,
@@ -133,6 +134,37 @@ const statusLabels = {
 };
 
 export function EstoquePage() {
+  const exportarInventario = () => {
+    exportReport({
+      title: "Relatório de inventário do estoque",
+      fileName: "relatorio-inventario-estoque",
+      columns: [
+        "Produto",
+        "Código",
+        "Fornecedor",
+        "Categoria",
+        "Dt ult. entrada",
+        "Dt ult. saída",
+        "Valor compra",
+        "Valor unit",
+        "Estoque total",
+        "Status",
+      ],
+      rows: inventario.map((produto) => [
+        produto.produto,
+        produto.codigo,
+        produto.fornecedor,
+        produto.categoria,
+        produto.entrada,
+        produto.saida,
+        produto.compra,
+        produto.unitario,
+        produto.estoque,
+        statusLabels[produto.status],
+      ]),
+    });
+  };
+
   return (
     <Page>
       <SummaryGrid>
@@ -154,7 +186,7 @@ export function EstoquePage() {
           <h1>Inventário de produtos</h1>
           <p>Gerencie seus itens de estoque e níveis de inventário</p>
         </div>
-        <ActionButton type="button">
+        <ActionButton type="button" onClick={exportarInventario}>
           <Icon name="file-earmark-arrow-up" size={14} color="#fff" />
           Exportar
         </ActionButton>

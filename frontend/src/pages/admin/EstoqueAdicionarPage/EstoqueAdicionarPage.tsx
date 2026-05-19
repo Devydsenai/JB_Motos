@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Icon } from "@components/atoms/Icon";
+import { exportReport } from "@/utils/exportReports";
 import {
   ActionButton,
   Field,
@@ -108,6 +109,35 @@ export function EstoqueAdicionarPage() {
     setObservacoes("");
   };
 
+  const exportarMovimentacoes = () => {
+    exportReport({
+      title: "Histórico de movimentações do estoque",
+      fileName: "relatorio-movimentacoes-estoque",
+      columns: [
+        "Data/hora",
+        "Tipo",
+        "Produto",
+        "Quantidade",
+        "Estoque atual",
+        "Responsável",
+        "Motivo",
+      ],
+      rows: historico.map((item) => [
+        item.data,
+        item.tipo === "entrada"
+          ? "Entrada"
+          : item.tipo === "saida"
+            ? "Saída"
+            : "Ajuste",
+        item.produto,
+        item.quantidade,
+        item.estoqueAtual,
+        item.responsavel,
+        item.motivo,
+      ]),
+    });
+  };
+
   return (
     <Page>
       <MovementForm onSubmit={salvarMovimentacao}>
@@ -205,7 +235,7 @@ export function EstoqueAdicionarPage() {
           <h2>Histórico de movimentações</h2>
           <p>Entradas, saídas e ajustes manuais do estoque</p>
         </div>
-        <ActionButton type="button">
+        <ActionButton type="button" onClick={exportarMovimentacoes}>
           <Icon name="file-earmark-arrow-up" size={14} color="#fff" />
           Exportar
         </ActionButton>

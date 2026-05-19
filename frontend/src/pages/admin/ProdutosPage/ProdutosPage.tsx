@@ -1,5 +1,6 @@
 import { useState, type ChangeEvent } from "react";
 import { Icon } from "@components/atoms/Icon";
+import { exportReport } from "@/utils/exportReports";
 import {
   ActionButton,
   CheckboxField,
@@ -66,7 +67,7 @@ type ProdutoInventario = {
   validade: string;
 };
 
-type ModalAtivo = "importar" | "exportar" | "produto" | null;
+type ModalAtivo = "importar" | "produto" | null;
 
 const produtoInicial: ProdutoInventario = {
   id: "",
@@ -259,7 +260,6 @@ export function ProdutosPage() {
   const [produtoForm, setProdutoForm] = useState(produtoInicial);
   const [arquivoImportacao, setArquivoImportacao] = useState("");
   const [progressoImportacao, setProgressoImportacao] = useState(0);
-  const [progressoExportacao, setProgressoExportacao] = useState(0);
   const produtosAtivos = produtos.filter((produto) => produto.ativo).length;
   const produtosInativos = produtos.length - produtosAtivos;
   const produtosForaEstoque = produtos.filter(
@@ -301,7 +301,6 @@ export function ProdutosPage() {
     setProdutoEditandoId(null);
     setArquivoImportacao("");
     setProgressoImportacao(0);
-    setProgressoExportacao(0);
     setProdutoForm(produtoInicial);
   };
 
@@ -364,6 +363,47 @@ export function ProdutosPage() {
     fecharModal();
   };
 
+  const exportarProdutos = () => {
+    exportReport({
+      title: "Relatório de produtos",
+      fileName: "relatorio-produtos-jb-motos",
+      columns: [
+        "Produto",
+        "Código",
+        "Descrição",
+        "Fornecedor",
+        "Categoria",
+        "Valor venda",
+        "Preço custo",
+        "Quantidade",
+        "Quantidade mínima",
+        "Código de barras",
+        "Localização",
+        "Peso",
+        "Dimensões",
+        "Validade",
+        "Status",
+      ],
+      rows: produtos.map((produto) => [
+        produto.produto,
+        produto.codigo,
+        produto.descricao,
+        produto.fornecedor,
+        produto.categoria,
+        produto.valor,
+        produto.precoCusto,
+        produto.quantidade,
+        produto.quantidadeMinima,
+        produto.codigoBarras,
+        produto.localizacao,
+        produto.peso,
+        produto.dimensoes,
+        produto.validade,
+        produto.ativo ? "Ativo" : "Inativo",
+      ]),
+    });
+  };
+
   return (
     <Page>
       <SummaryGrid>
@@ -391,7 +431,7 @@ export function ProdutosPage() {
             <Icon name="file-earmark-arrow-down" size={14} color="#fff" />
             Importar
           </ActionButton>
-          <ActionButton type="button" onClick={() => setModalAtivo("exportar")}>
+          <ActionButton type="button" onClick={exportarProdutos}>
             <Icon name="file-earmark-arrow-up" size={14} color="#fff" />
             Exportar
           </ActionButton>
@@ -526,42 +566,6 @@ export function ProdutosPage() {
                   onClick={() => setProgressoImportacao(100)}
                 >
                   Importar
-                </ActionButton>
-              </ModalFooter>
-            </UploadModal>
-          )}
-
-          {modalAtivo === "exportar" && (
-            <UploadModal role="dialog" aria-modal="true">
-              <ModalHeader>
-                <h2>Exportar planilha - Produtos</h2>
-                <CloseButton type="button" onClick={fecharModal}>
-                  <Icon name="x-lg" size={13} color="#fff" />
-                </CloseButton>
-              </ModalHeader>
-
-              <ModalBody>
-                <Dropzone>
-                  <Icon name="file-earmark-arrow-up-fill" size={30} />
-                  <FileName>produtos-jb-motos.csv</FileName>
-                  <UploadHint>
-                    Exportação do inventário atual
-                    <span>CSV com produtos, estoque e status</span>
-                  </UploadHint>
-                  {progressoExportacao > 0 && (
-                    <ProgressBar>
-                      <ProgressFill style={{ width: `${progressoExportacao}%` }} />
-                    </ProgressBar>
-                  )}
-                </Dropzone>
-              </ModalBody>
-
-              <ModalFooter>
-                <ActionButton
-                  type="button"
-                  onClick={() => setProgressoExportacao(100)}
-                >
-                  Exportar
                 </ActionButton>
               </ModalFooter>
             </UploadModal>

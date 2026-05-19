@@ -1,4 +1,5 @@
 import { Icon } from "@components/atoms/Icon";
+import { exportReport } from "@/utils/exportReports";
 import {
   ActionButton,
   MovementBadge,
@@ -100,6 +101,35 @@ const resumoEntrada = [
 ];
 
 export function EstoqueEntradaPage() {
+  const exportarEntradas = () => {
+    exportReport({
+      title: "Relatório de entradas do estoque",
+      fileName: "relatorio-entradas-estoque",
+      columns: [
+        "Data/hora",
+        "Tipo",
+        "Produto",
+        "Código",
+        "Quantidade",
+        "Estoque atual",
+        "Fornecedor",
+        "Responsável",
+        "Motivo",
+      ],
+      rows: entradasIniciais.map((entrada) => [
+        entrada.data,
+        "Entrada",
+        entrada.produto,
+        entrada.codigo,
+        entrada.quantidade,
+        entrada.estoqueAtual,
+        entrada.fornecedor,
+        entrada.responsavel,
+        entrada.motivo,
+      ]),
+    });
+  };
+
   return (
     <Page>
       <SummaryGrid>
@@ -121,7 +151,7 @@ export function EstoqueEntradaPage() {
           <h1>Entrada do estoque</h1>
           <p>Produtos recebidos, fornecedores e quantidades que entraram</p>
         </div>
-        <ActionButton type="button">
+        <ActionButton type="button" onClick={exportarEntradas}>
           <Icon name="file-earmark-arrow-up" size={14} color="#fff" />
           Exportar
         </ActionButton>

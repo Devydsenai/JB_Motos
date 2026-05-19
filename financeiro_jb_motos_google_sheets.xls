@@ -1,0 +1,216 @@
+<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+ <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
+  <Author>JB Motos</Author>
+  <Created>2026-05-19T00:00:00Z</Created>
+  <Company>JB Motos</Company>
+  <Version>1.0</Version>
+ </DocumentProperties>
+ <Styles>
+  <Style ss:ID="Default" ss:Name="Normal">
+   <Alignment ss:Vertical="Center"/>
+   <Font ss:FontName="Arial" ss:Size="10"/>
+  </Style>
+  <Style ss:ID="Header">
+   <Font ss:FontName="Arial" ss:Size="10" ss:Bold="1" ss:Color="#FFFFFF"/>
+   <Interior ss:Color="#C41E1E" ss:Pattern="Solid"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="Title">
+   <Font ss:FontName="Arial" ss:Size="14" ss:Bold="1" ss:Color="#C41E1E"/>
+  </Style>
+  <Style ss:ID="Money">
+   <NumberFormat ss:Format="&quot;R$&quot; #,##0.00"/>
+  </Style>
+  <Style ss:ID="Date">
+   <NumberFormat ss:Format="Short Date"/>
+  </Style>
+ </Styles>
+ <Worksheet ss:Name="Resumo">
+  <Table>
+   <Column ss:Width="220"/>
+   <Column ss:Width="120"/>
+   <Row>
+    <Cell ss:StyleID="Title"><Data ss:Type="String">Resumo financeiro - JB Motos</Data></Cell>
+   </Row>
+   <Row/>
+   <Row>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Indicador</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Valor</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Dias apurados</Data></Cell>
+    <Cell><Data ss:Type="Number">7</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Media faturamento / dia</Data></Cell>
+    <Cell ss:StyleID="Money"><Data ss:Type="Number">4928.57</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Media gasto real / dia</Data></Cell>
+    <Cell ss:StyleID="Money"><Data ss:Type="Number">2078.57</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Media lucro apurado / dia</Data></Cell>
+    <Cell ss:StyleID="Money"><Data ss:Type="Number">2850</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Total faturamento</Data></Cell>
+    <Cell ss:StyleID="Money"><Data ss:Type="Number">34500</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Total gasto real</Data></Cell>
+    <Cell ss:StyleID="Money"><Data ss:Type="Number">14550</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Total lucro apurado</Data></Cell>
+    <Cell ss:StyleID="Money"><Data ss:Type="Number">19950</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Pagamentos de clientes</Data></Cell>
+    <Cell ss:StyleID="Money"><Data ss:Type="Number">1900</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Media por pagamento cliente</Data></Cell>
+    <Cell ss:StyleID="Money"><Data ss:Type="Number">633.33</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Total saidas</Data></Cell>
+    <Cell ss:StyleID="Money"><Data ss:Type="Number">4000</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Media geral por lancamento</Data></Cell>
+    <Cell ss:StyleID="Money"><Data ss:Type="Number">1333.33</Data></Cell>
+   </Row>
+  </Table>
+ </Worksheet>
+ <Worksheet ss:Name="Apuracao diaria">
+  <Table>
+   <Column ss:Width="120"/>
+   <Column ss:Width="120"/>
+   <Column ss:Width="120"/>
+   <Column ss:Width="120"/>
+   <Row>
+    <Cell ss:StyleID="Title"><Data ss:Type="String">Apuracao diaria da loja</Data></Cell>
+   </Row>
+   <Row/>
+   <Row>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Data</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Faturamento</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Gasto real</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Lucro apurado</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="Date"><Data ss:Type="DateTime">2026-05-12T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="Money"><Data ss:Type="Number">4200</Data></Cell>
+    <Cell ss:StyleID="Money"><Data ss:Type="Number">1850</Data></Cell>
+    <Cell ss:Formula="=RC[-2]-RC[-1]" ss:StyleID="Money"><Data ss:Type="Number">2350</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="Date"><Data ss:Type="DateTime">2026-05-13T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="Money"><Data ss:Type="Number">5100</Data></Cell>
+    <Cell ss:StyleID="Money"><Data ss:Type="Number">2100</Data></Cell>
+    <Cell ss:Formula="=RC[-2]-RC[-1]" ss:StyleID="Money"><Data ss:Type="Number">3000</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="Date"><Data ss:Type="DateTime">2026-05-14T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="Money"><Data ss:Type="Number">3800</Data></Cell>
+    <Cell ss:StyleID="Money"><Data ss:Type="Number">1920</Data></Cell>
+    <Cell ss:Formula="=RC[-2]-RC[-1]" ss:StyleID="Money"><Data ss:Type="Number">1880</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="Date"><Data ss:Type="DateTime">2026-05-15T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="Money"><Data ss:Type="Number">6200</Data></Cell>
+    <Cell ss:StyleID="Money"><Data ss:Type="Number">2450</Data></Cell>
+    <Cell ss:Formula="=RC[-2]-RC[-1]" ss:StyleID="Money"><Data ss:Type="Number">3750</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="Date"><Data ss:Type="DateTime">2026-05-16T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="Money"><Data ss:Type="Number">4900</Data></Cell>
+    <Cell ss:StyleID="Money"><Data ss:Type="Number">2200</Data></Cell>
+    <Cell ss:Formula="=RC[-2]-RC[-1]" ss:StyleID="Money"><Data ss:Type="Number">2700</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="Date"><Data ss:Type="DateTime">2026-05-17T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="Money"><Data ss:Type="Number">5500</Data></Cell>
+    <Cell ss:StyleID="Money"><Data ss:Type="Number">1980</Data></Cell>
+    <Cell ss:Formula="=RC[-2]-RC[-1]" ss:StyleID="Money"><Data ss:Type="Number">3520</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="Date"><Data ss:Type="DateTime">2026-05-18T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="Money"><Data ss:Type="Number">4800</Data></Cell>
+    <Cell ss:StyleID="Money"><Data ss:Type="Number">2050</Data></Cell>
+    <Cell ss:Formula="=RC[-2]-RC[-1]" ss:StyleID="Money"><Data ss:Type="Number">2750</Data></Cell>
+   </Row>
+  </Table>
+ </Worksheet>
+ <Worksheet ss:Name="Lancamentos">
+  <Table>
+   <Column ss:Width="80"/>
+   <Column ss:Width="120"/>
+   <Column ss:Width="300"/>
+   <Column ss:Width="130"/>
+   <Column ss:Width="120"/>
+   <Row>
+    <Cell ss:StyleID="Title"><Data ss:Type="String">Pagamentos e lancamentos</Data></Cell>
+   </Row>
+   <Row/>
+   <Row>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">ID</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Data</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Descricao</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Tipo</Data></Cell>
+    <Cell ss:StyleID="Header"><Data ss:Type="String">Valor</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">1</Data></Cell>
+    <Cell ss:StyleID="Date"><Data ss:Type="DateTime">2026-05-18T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">Pagamento pecas - Cliente Joao (OS #1042)</Data></Cell>
+    <Cell><Data ss:Type="String">Pagamento cliente</Data></Cell>
+    <Cell ss:StyleID="Money"><Data ss:Type="Number">850</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">2</Data></Cell>
+    <Cell ss:StyleID="Date"><Data ss:Type="DateTime">2026-05-18T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">Fornecedor Motopecas - NF 8821</Data></Cell>
+    <Cell><Data ss:Type="String">Saida</Data></Cell>
+    <Cell ss:StyleID="Money"><Data ss:Type="Number">1200</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">3</Data></Cell>
+    <Cell ss:StyleID="Date"><Data ss:Type="DateTime">2026-05-17T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">Pagamento servico - Cliente Maria</Data></Cell>
+    <Cell><Data ss:Type="String">Pagamento cliente</Data></Cell>
+    <Cell ss:StyleID="Money"><Data ss:Type="Number">420</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">4</Data></Cell>
+    <Cell ss:StyleID="Date"><Data ss:Type="DateTime">2026-05-17T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">Entrada caixa - vendas balcão</Data></Cell>
+    <Cell><Data ss:Type="String">Entrada</Data></Cell>
+    <Cell ss:StyleID="Money"><Data ss:Type="Number">2100</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">5</Data></Cell>
+    <Cell ss:StyleID="Date"><Data ss:Type="DateTime">2026-05-16T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">Pagamento pecas - Cliente Pedro</Data></Cell>
+    <Cell><Data ss:Type="String">Pagamento cliente</Data></Cell>
+    <Cell ss:StyleID="Money"><Data ss:Type="Number">630</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">6</Data></Cell>
+    <Cell ss:StyleID="Date"><Data ss:Type="DateTime">2026-05-16T00:00:00.000</Data></Cell>
+    <Cell><Data ss:Type="String">Aluguel galpao (parcela)</Data></Cell>
+    <Cell><Data ss:Type="String">Saida</Data></Cell>
+    <Cell ss:StyleID="Money"><Data ss:Type="Number">2800</Data></Cell>
+   </Row>
+  </Table>
+ </Worksheet>
+</Workbook>
