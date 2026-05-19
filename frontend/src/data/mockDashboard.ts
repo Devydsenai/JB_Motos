@@ -26,6 +26,31 @@ export type CategoriaLoja = {
   hint?: string;
 };
 
+export type AtividadeRecente = {
+  id: string;
+  titulo: string;
+  descricao: string;
+  tempo: string;
+  icon: string;
+  cor: string;
+  fundo: string;
+};
+
+export type StatusEstoque = "estavel" | "atencao" | "critico";
+
+export type ProdutoEstoqueDashboard = {
+  id: string;
+  produto: string;
+  codigo: string;
+  categoria: string;
+  estoque: number;
+  estoqueMaximo: number;
+  status: StatusEstoque;
+  icon: string;
+  cor: string;
+  fundo: string;
+};
+
 /** Ordem no grid 2×2: saída | entrada / serviços | em espera */
 export const categoriasBase: Omit<CategoriaLoja, "valor" | "hint">[] = [
   {
@@ -245,6 +270,96 @@ const graficoPorPeriodo: Record<PeriodoFiltro, PontoGrafico[]> = {
   ],
 };
 
+export const atividadesRecentes: AtividadeRecente[] = [
+  {
+    id: "carrinho",
+    titulo: "Carrinho iniciado",
+    descricao: "Cliente adicionou itens para compra",
+    tempo: "12 min atrás",
+    icon: "cart3",
+    cor: "#16a34a",
+    fundo: "#dcfce7",
+  },
+  {
+    id: "saida",
+    titulo: "Saída registrada",
+    descricao: "Óleo 10W30 - venda balcão",
+    tempo: "45 min atrás",
+    icon: "box-arrow-up",
+    cor: "#c41e1e",
+    fundo: "#fee2e2",
+  },
+  {
+    id: "servico",
+    titulo: "Serviço em andamento",
+    descricao: "Troca de relação - Honda CG",
+    tempo: "2 horas atrás",
+    icon: "tools",
+    cor: "#f97316",
+    fundo: "#ffedd5",
+  },
+  {
+    id: "espera",
+    titulo: "Peça em espera",
+    descricao: "Pastilha de freio aguardando entrada",
+    tempo: "1 dia atrás",
+    icon: "hourglass-split",
+    cor: "#8b5cf6",
+    fundo: "#ede9fe",
+  },
+];
+
+export const statusEstoqueDashboard: ProdutoEstoqueDashboard[] = [
+  {
+    id: "prd-001",
+    produto: "Óleo Motor 10W30",
+    codigo: "PRD-001",
+    categoria: "Lubrificantes",
+    estoque: 48,
+    estoqueMaximo: 60,
+    status: "estavel",
+    icon: "droplet-fill",
+    cor: "#16a34a",
+    fundo: "#dcfce7",
+  },
+  {
+    id: "prd-002",
+    produto: "Pastilha de Freio",
+    codigo: "PRD-002",
+    categoria: "Freios",
+    estoque: 5,
+    estoqueMaximo: 50,
+    status: "critico",
+    icon: "box-seam",
+    cor: "#c41e1e",
+    fundo: "#fee2e2",
+  },
+  {
+    id: "prd-003",
+    produto: "Pneu Traseiro 90/90",
+    codigo: "PRD-003",
+    categoria: "Pneus",
+    estoque: 12,
+    estoqueMaximo: 40,
+    status: "atencao",
+    icon: "circle",
+    cor: "#f97316",
+    fundo: "#ffedd5",
+  },
+  {
+    id: "prd-004",
+    produto: "Capacete Pro Tork",
+    codigo: "PRD-004",
+    categoria: "Acessórios",
+    estoque: 32,
+    estoqueMaximo: 45,
+    status: "estavel",
+    icon: "shield-fill-check",
+    cor: "#16a34a",
+    fundo: "#dcfce7",
+  },
+];
+
 export function getCategoriasComValores(periodo: PeriodoFiltro): CategoriaLoja[] {
   const kpis = kpisPorPeriodo[periodo];
   return categoriasBase.map((cat) => {
@@ -262,6 +377,8 @@ export function getDashboardData(periodo: PeriodoFiltro) {
     kpis: kpisPorPeriodo[periodo],
     grafico: graficoPorPeriodo[periodo],
     categorias: getCategoriasComValores(periodo),
+    atividades: atividadesRecentes,
+    statusEstoque: statusEstoqueDashboard,
   };
 }
 

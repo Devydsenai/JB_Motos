@@ -5,8 +5,9 @@ import {
   periodoLabels,
   type PeriodoFiltro,
 } from "@/data/mockDashboard";
+import { DashboardBarChart } from "./DashboardBarChart";
 import { DashboardCategoryCards } from "./DashboardCategoryCards";
-import { DashboardLineChart } from "./DashboardLineChart";
+import { DashboardOperationsPanel } from "./DashboardOperationsPanel";
 import {
   CategoriesPanel,
   ChartCard,
@@ -40,7 +41,8 @@ const iconColors: Record<string, string> = {
 
 export function DashboardPage() {
   const [periodo, setPeriodo] = useState<PeriodoFiltro>("mes");
-  const { kpis, grafico, categorias } = getDashboardData(periodo);
+  const { kpis, categorias, atividades, statusEstoque } =
+    getDashboardData(periodo);
 
   return (
     <Page>
@@ -66,7 +68,7 @@ export function DashboardPage() {
       <ChartsRow>
         <ChartCard>
           <ChartHeader>
-            <ChartTitle>Controle da loja</ChartTitle>
+            <ChartTitle>Catálogo da loja</ChartTitle>
             <PeriodTabs role="tablist" aria-label="Período do gráfico">
               {PERIODOS.map((p) => (
                 <PeriodTab
@@ -84,16 +86,15 @@ export function DashboardPage() {
           </ChartHeader>
 
           <Legend>
-            <LegendItem $color="#c41e1e">
-              Movimentação atual da loja
-            </LegendItem>
-            <LegendItem $color="#1a1a1a">
-              Referência do período
-            </LegendItem>
+            {categorias.map((categoria) => (
+              <LegendItem key={categoria.id} $color={categoria.cor}>
+                {categoria.label}
+              </LegendItem>
+            ))}
           </Legend>
 
           <ChartSvgWrap>
-            <DashboardLineChart dados={grafico} />
+            <DashboardBarChart dados={categorias} />
           </ChartSvgWrap>
           <MockNote>
             Dados de demonstração — integração com backend em breve.
@@ -102,11 +103,16 @@ export function DashboardPage() {
 
         <CategoriesPanel>
           <ChartHeader>
-            <ChartTitle>Categorias da loja</ChartTitle>
+            <ChartTitle>Resumo por categoria</ChartTitle>
           </ChartHeader>
           <DashboardCategoryCards categorias={categorias} />
         </CategoriesPanel>
       </ChartsRow>
+
+      <DashboardOperationsPanel
+        atividades={atividades}
+        statusEstoque={statusEstoque}
+      />
     </Page>
   );
 }
