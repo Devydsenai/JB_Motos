@@ -172,15 +172,24 @@ function chooseExportFormat(title: string): Promise<ExportFormat | null> {
   });
 }
 
+export function exportReportPdf(options: ExportReportOptions) {
+  const html = buildReportHtml(options);
+  openPdfPrint(options.title, html);
+}
+
+export function exportReportExcel(options: ExportReportOptions) {
+  const html = buildReportHtml(options);
+  downloadExcel(options.fileName, html);
+}
+
 export async function exportReport(options: ExportReportOptions) {
   const format = await chooseExportFormat(options.title);
   if (!format) return;
 
-  const html = buildReportHtml(options);
   if (format === "excel") {
-    downloadExcel(options.fileName, html);
+    exportReportExcel(options);
     return;
   }
 
-  openPdfPrint(options.title, html);
+  exportReportPdf(options);
 }

@@ -6,6 +6,8 @@ import { Text } from "@components/atoms/Text";
 import { Icon } from "@components/atoms/Icon";
 import { adminRoutes } from "@/config/adminMenu";
 import { useSidebar } from "@/contexts/SidebarContext";
+import { useSessao } from "@/contexts/SessaoContext";
+import { perfilSistemaLabels } from "@/config/permissoes";
 
 const Aside = styled.aside<{ $collapsed?: boolean }>`
   width: ${({ theme, $collapsed }) =>
@@ -128,6 +130,11 @@ const estoqueItems = [
     icon: "arrow-left-right",
     label: "Movimentações",
   },
+  {
+    to: adminRoutes.estoqueBaixo,
+    icon: "exclamation-triangle-fill",
+    label: "Estoque baixo",
+  },
 ];
 
 const clientesItems = [
@@ -140,7 +147,7 @@ const clientesItems = [
 ];
 
 const cadastrosItems = [
-  { to: adminRoutes.cadastroProdutos, icon: "tag", label: "Produtos" },
+  { to: adminRoutes.cadastroAtendimento, icon: "headset", label: "Atendimento" },
   {
     to: adminRoutes.cadastroFornecedores,
     icon: "truck",
@@ -150,6 +157,7 @@ const cadastrosItems = [
 
 export function AdminSidebar() {
   const { collapsed, toggleCollapsed } = useSidebar();
+  const { perfil } = useSessao();
 
   return (
     <Aside $collapsed={collapsed}>
@@ -223,7 +231,7 @@ export function AdminSidebar() {
           <NavItemGroup
             label="Cadastros"
             icon="folder-plus"
-            matchPaths={[adminRoutes.cadastros]}
+            matchPaths={[adminRoutes.cadastros, adminRoutes.cadastroAtendimento]}
             items={cadastrosItems}
             collapsed={collapsed}
           />
@@ -231,6 +239,12 @@ export function AdminSidebar() {
             to={adminRoutes.administrativo}
             icon="shield-lock"
             label="Administrativo"
+            collapsed={collapsed}
+          />
+          <NavItem
+            to={adminRoutes.configuracoes}
+            icon="gear"
+            label="Configurações"
             collapsed={collapsed}
           />
         </ul>
@@ -248,7 +262,7 @@ export function AdminSidebar() {
         </StoreLink>
         {!collapsed && (
           <Text variant="caption" color="muted" style={{ marginTop: "0.75rem" }}>
-            Perfil: Administrativo
+            Perfil: {perfilSistemaLabels[perfil]}
           </Text>
         )}
       </Footer>

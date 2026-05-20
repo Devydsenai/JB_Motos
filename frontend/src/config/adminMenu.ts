@@ -11,15 +11,18 @@ export const adminRoutes = {
   estoqueEntrada: `${ADMIN_BASE}/estoque/entrada`,
   estoqueSaida: `${ADMIN_BASE}/estoque/saida`,
   estoqueAdicionar: `${ADMIN_BASE}/estoque/adicionar`,
+  estoqueBaixo: `${ADMIN_BASE}/estoque/baixo`,
   requisicoes: `${ADMIN_BASE}/requisicoes`,
   servicos: `${ADMIN_BASE}/servicos`,
   financeiro: `${ADMIN_BASE}/financeiro`,
   cadastros: `${ADMIN_BASE}/cadastros`,
+  /** Área do atendente no balcão (catálogo + OS para o mecânico) */
+  cadastroAtendimento: `${ADMIN_BASE}/cadastros/atendimento`,
+  /** Legado — redireciona para atendimento */
   cadastroProdutos: `${ADMIN_BASE}/cadastros/produtos`,
   cadastroFornecedores: `${ADMIN_BASE}/cadastros/fornecedores`,
   administrativo: `${ADMIN_BASE}/administrativo`,
+  configuracoes: `${ADMIN_BASE}/configuracoes`,
   loja: "/loja",
 } as const;
 
-/** Mock: alertas de estoque baixo até o backend conectar */
-export const MOCK_ALERTAS_ESTOQUE = 3;

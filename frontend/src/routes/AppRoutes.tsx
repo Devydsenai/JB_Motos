@@ -7,13 +7,15 @@ import { EstoquePage } from "@pages/admin/EstoquePage";
 import { EstoqueEntradaPage } from "@pages/admin/EstoqueEntradaPage";
 import { EstoqueSaidaPage } from "@pages/admin/EstoqueSaidaPage";
 import { EstoqueAdicionarPage } from "@pages/admin/EstoqueAdicionarPage";
+import { EstoqueBaixoPage } from "@pages/admin/EstoqueBaixoPage";
 import { RequisicoesPage } from "@pages/admin/RequisicoesPage";
 import { ServicosPage } from "@pages/admin/ServicosPage";
 import { FinanceiroPage } from "@pages/admin/FinanceiroPage";
 import { CadastrosPage } from "@pages/admin/CadastrosPage";
-import { CadastroProdutosPage } from "@pages/admin/CadastroProdutosPage";
+import { AtendimentoPage } from "@pages/admin/AtendimentoPage";
 import { CadastroFornecedoresPage } from "@pages/admin/CadastroFornecedoresPage";
 import { AdministrativoPage } from "@pages/admin/AdministrativoPage";
+import { ConfiguracoesPage } from "@pages/admin/ConfiguracoesPage";
 import {
   ClientesListaPage,
   ClientesSolicitacoesPage,
@@ -39,16 +41,22 @@ export function AppRoutes() {
         <Route path="estoque/entrada" element={<EstoqueEntradaPage />} />
         <Route path="estoque/saida" element={<EstoqueSaidaPage />} />
         <Route path="estoque/adicionar" element={<EstoqueAdicionarPage />} />
+        <Route path="estoque/baixo" element={<EstoqueBaixoPage />} />
         <Route path="requisicoes" element={<RequisicoesPage />} />
         <Route path="servicos" element={<ServicosPage />} />
         <Route path="financeiro" element={<FinanceiroPage />} />
         <Route path="cadastros" element={<CadastrosPage />} />
-        <Route path="cadastros/produtos" element={<CadastroProdutosPage />} />
+        <Route path="cadastros/atendimento" element={<AtendimentoPage />} />
+        <Route
+          path="cadastros/produtos"
+          element={<Navigate to="/admin/cadastros/atendimento" replace />}
+        />
         <Route
           path="cadastros/fornecedores"
           element={<CadastroFornecedoresPage />}
         />
         <Route path="administrativo" element={<AdministrativoPage />} />
+        <Route path="configuracoes" element={<ConfiguracoesPage />} />
       </Route>
 
       <Route path="/loja" element={<StoreTemplate />}>

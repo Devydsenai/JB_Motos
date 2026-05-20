@@ -2,10 +2,11 @@ import { useState } from "react";
 import styled from "styled-components";
 import { SearchBar } from "@components/molecules/SearchBar";
 import { AlertBadge } from "@components/molecules/AlertBadge";
+import { EstoqueBaixoAlert } from "@components/molecules/EstoqueBaixoAlert";
 import { DropdownMenu } from "@components/molecules/DropdownMenu";
 import { ThemeToggle } from "@components/molecules/ThemeToggle";
 import { Text } from "@components/atoms/Text";
-import { adminRoutes, MOCK_ALERTAS_ESTOQUE } from "@/config/adminMenu";
+import { adminRoutes } from "@/config/adminMenu";
 
 const Header = styled.header`
   height: ${({ theme }) => theme.layout.headerHeight};
@@ -68,12 +69,7 @@ export function AdminHeader({ title = "Painel Administrativo" }: AdminHeaderProp
 
       <Actions>
         <ThemeToggle />
-        <AlertBadge
-          to={adminRoutes.requisicoes}
-          icon="exclamation-triangle-fill"
-          count={MOCK_ALERTAS_ESTOQUE}
-          title={`${MOCK_ALERTAS_ESTOQUE} produto(s) com estoque baixo`}
-        />
+        <EstoqueBaixoAlert />
         <AlertBadge
           to={adminRoutes.requisicoes}
           icon="clipboard-plus"
@@ -84,7 +80,11 @@ export function AdminHeader({ title = "Painel Administrativo" }: AdminHeaderProp
           label="Menu"
           icon="list"
           items={[
-            { label: "Configurações", icon: "gear", onClick: () => {} },
+            {
+              label: "Configurações",
+              icon: "gear",
+              href: adminRoutes.configuracoes,
+            },
             {
               label: "Voltar para a loja",
               icon: "shop",

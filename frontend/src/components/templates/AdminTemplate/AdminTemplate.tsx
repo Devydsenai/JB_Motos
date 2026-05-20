@@ -3,6 +3,11 @@ import styled from "styled-components";
 import { AdminSidebar } from "@components/organisms/AdminSidebar";
 import { AdminHeader } from "@components/organisms/AdminHeader";
 import { SidebarProvider } from "@/contexts/SidebarContext";
+import { SessaoProvider } from "@/contexts/SessaoContext";
+import { AtendimentoProvider } from "@/contexts/AtendimentoContext";
+import { FornecedoresProvider } from "@/contexts/FornecedoresContext";
+import { FuncionariosProvider } from "@/contexts/FuncionariosContext";
+import { ProdutosProvider } from "@/contexts/ProdutosContext";
 
 const Layout = styled.div`
   display: flex;
@@ -24,16 +29,26 @@ const Content = styled.main`
 
 export function AdminTemplate() {
   return (
+    <SessaoProvider>
     <SidebarProvider>
-      <Layout>
-        <AdminSidebar />
-        <Main>
-          <AdminHeader />
-          <Content>
-            <Outlet />
-          </Content>
-        </Main>
-      </Layout>
+      <ProdutosProvider>
+        <FornecedoresProvider>
+        <FuncionariosProvider>
+        <AtendimentoProvider>
+        <Layout>
+          <AdminSidebar />
+          <Main>
+            <AdminHeader />
+            <Content>
+              <Outlet />
+            </Content>
+          </Main>
+        </Layout>
+        </AtendimentoProvider>
+        </FuncionariosProvider>
+        </FornecedoresProvider>
+      </ProdutosProvider>
     </SidebarProvider>
+    </SessaoProvider>
   );
 }

@@ -29,63 +29,6 @@ export const Section = styled.section`
   overflow-x: auto;
 `;
 
-export const SheetIntegrationHeader = styled.div`
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin-bottom: 1rem;
-`;
-
-export const SheetLink = styled.a`
-  border: 1px solid ${({ theme }) => theme.colors.primary};
-  background: ${({ theme }) => theme.colors.primary};
-  color: #fff;
-  border-radius: ${({ theme }) => theme.radius.md};
-  padding: 0.5rem 0.85rem;
-  font-size: 0.8125rem;
-  font-weight: 700;
-  text-decoration: none;
-
-  &:hover {
-    background: ${({ theme }) => theme.colors.primaryDark};
-    border-color: ${({ theme }) => theme.colors.primaryDark};
-  }
-`;
-
-export const SheetActionButton = styled.button`
-  border: 1px solid ${({ theme }) => theme.colors.primary};
-  background: transparent;
-  color: ${({ theme }) => theme.colors.primary};
-  border-radius: ${({ theme }) => theme.radius.md};
-  padding: 0.5rem 0.85rem;
-  font-size: 0.8125rem;
-  font-weight: 700;
-  cursor: pointer;
-
-  &:hover {
-    background: ${({ theme }) => theme.colors.primary};
-    color: #fff;
-  }
-`;
-
-export const SheetSyncStatus = styled.p`
-  margin-bottom: 0.75rem;
-  font-size: 0.8125rem;
-  color: ${({ theme }) => theme.colors.textMuted};
-`;
-
-export const GoogleSheetFrame = styled.iframe`
-  width: 100%;
-  min-height: 460px;
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.radius.md};
-  background: ${({ theme }) => theme.colors.surface};
-  filter: ${({ theme }) =>
-    theme.mode === "dark" ? "invert(1) hue-rotate(180deg)" : "none"};
-`;
-
 export const Table = styled.table`
   width: 100%;
   border-collapse: collapse;

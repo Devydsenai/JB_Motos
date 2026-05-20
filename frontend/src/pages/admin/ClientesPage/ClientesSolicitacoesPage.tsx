@@ -1,6 +1,7 @@
 import { Text } from "@components/atoms/Text";
 import { StatusBadge } from "@components/molecules/StatusBadge";
-import { solicitacoesMock } from "@/data/mockClientes";
+import { statusLabels } from "@/data/mockClientes";
+import { useAtendimento } from "@/contexts/AtendimentoContext";
 import { Banner, Card, Page, Table } from "./ClientesPage.styles";
 
 function formatarData(iso: string) {
@@ -10,8 +11,9 @@ function formatarData(iso: string) {
 const tipoLabel = { peca: "Peça", servico: "Serviço" } as const;
 
 export function ClientesSolicitacoesPage() {
-  const pendentes = solicitacoesMock.filter((s) => s.status === "pendente").length;
-  const emEspera = solicitacoesMock.filter((s) => s.status === "em_espera").length;
+  const { ordens } = useAtendimento();
+  const pendentes = ordens.filter((s) => s.status === "pendente").length;
+  const emEspera = ordens.filter((s) => s.status === "em_espera").length;
 
   return (
     <Page>
@@ -20,13 +22,13 @@ export function ClientesSolicitacoesPage() {
           Solicitações dos clientes
         </Text>
         <Text variant="body" color="muted" style={{ marginTop: "0.35rem" }}>
-          Pedidos de peças e serviços — status de atendimento
+          Pedidos da loja online e ordens abertas no balcão
         </Text>
       </div>
 
       <Banner>
-        Loja aberta de <strong>segunda a sexta</strong>. Solicitações no sábado ou
-        domingo ficam <strong>pendentes</strong> até o próximo dia útil.{" "}
+        Loja aberta de <strong>segunda a sexta</strong>. Solicitações no sábado
+        ou domingo ficam <strong>pendentes</strong> até o próximo dia útil.{" "}
         {pendentes > 0 && `(${pendentes} pendente(s) · ${emEspera} em espera)`}
       </Banner>
 
@@ -43,7 +45,7 @@ export function ClientesSolicitacoesPage() {
             </tr>
           </thead>
           <tbody>
-            {solicitacoesMock.map((s) => (
+            {ordens.map((s) => (
               <tr key={s.id}>
                 <td>{s.clienteNome}</td>
                 <td>{tipoLabel[s.tipo]}</td>
@@ -68,10 +70,12 @@ export function ClientesSolicitacoesPage() {
           Legenda de status
         </Text>
         <Text variant="caption" color="muted" style={{ marginTop: "0.5rem" }}>
-          <strong>Pendente</strong> — aguardando análise (ex.: pedido no fim de
-          semana) · <strong>Em espera</strong> — em fila ou aguardando peça ·{" "}
-          <strong>Atendido</strong> — em andamento na oficina ·{" "}
-          <strong>Concluído</strong> — serviço/peça finalizado
+          {Object.entries(statusLabels).map(([k, v]) => (
+            <span key={k}>
+              <strong>{v}</strong> ·{" "}
+            </span>
+          ))}
+          O mecânico atualiza em Serviços.
         </Text>
       </Card>
     </Page>

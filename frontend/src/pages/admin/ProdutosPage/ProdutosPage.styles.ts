@@ -80,6 +80,16 @@ export const InventoryTitle = styled.div`
   p {
     font-size: 0.8125rem;
     color: ${({ theme }) => theme.colors.textMuted};
+
+    a {
+      color: ${({ theme }) => theme.colors.primary};
+      font-weight: 600;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
   }
 `;
 

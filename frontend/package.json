@@ -9,11 +9,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@handsontable/react": "^16.2.0",
     "bootstrap-icons": "^1.13.1",
+    "handsontable": "^17.1.0",
+    "hyperformula": "^3.2.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-router-dom": "^7.13.0",
-    "styled-components": "^6.3.11"
+    "styled-components": "^6.3.11",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/node": "^22.19.11",

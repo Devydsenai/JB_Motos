@@ -1,5 +1,9 @@
 import { useState, type ChangeEvent } from "react";
+import { Link } from "react-router-dom";
 import { Icon } from "@components/atoms/Icon";
+import { adminRoutes } from "@/config/adminMenu";
+import { produtoInicial, useProdutos } from "@/contexts/ProdutosContext";
+import type { Produto } from "@/types/produto";
 import { exportReport } from "@/utils/exportReports";
 import {
   ActionButton,
@@ -48,213 +52,10 @@ import {
   ProductModal,
 } from "./ProdutosPage.styles";
 
-type ProdutoInventario = {
-  id: string;
-  produto: string;
-  codigo: string;
-  descricao: string;
-  fornecedor: string;
-  categoria: string;
-  valor: string;
-  ativo: boolean;
-  precoCusto: string;
-  quantidade: string;
-  quantidadeMinima: string;
-  codigoBarras: string;
-  localizacao: string;
-  peso: string;
-  dimensoes: string;
-  validade: string;
-};
-
 type ModalAtivo = "importar" | "produto" | null;
 
-const produtoInicial: ProdutoInventario = {
-  id: "",
-  produto: "",
-  codigo: "",
-  descricao: "",
-  fornecedor: "",
-  categoria: "",
-  valor: "",
-  ativo: true,
-  precoCusto: "",
-  quantidade: "",
-  quantidadeMinima: "",
-  codigoBarras: "",
-  localizacao: "",
-  peso: "",
-  dimensoes: "",
-  validade: "",
-};
-
-const produtosMock: ProdutoInventario[] = [
-  {
-    id: "prd-001",
-    produto: "Óleo Motor 10W30",
-    codigo: "PRD-001",
-    descricao: "Óleo semissintético para motos de baixa e média cilindrada",
-    fornecedor: "Distribuidora Alfa",
-    categoria: "Lubrificantes",
-    valor: "R$48,90",
-    ativo: true,
-    precoCusto: "R$31,00",
-    quantidade: "48",
-    quantidadeMinima: "10",
-    codigoBarras: "7891000100010",
-    localizacao: "Prateleira A1",
-    peso: "1,00",
-    dimensoes: "8 x 8 x 22",
-    validade: "2026-12-31",
-  },
-  {
-    id: "prd-002",
-    produto: "Pastilha de Freio",
-    codigo: "PRD-002",
-    descricao: "Pastilha dianteira compatível com linha Honda CG",
-    fornecedor: "Moto Peças Brasil",
-    categoria: "Freios",
-    valor: "R$35,00",
-    ativo: false,
-    precoCusto: "R$21,00",
-    quantidade: "5",
-    quantidadeMinima: "12",
-    codigoBarras: "7891000100027",
-    localizacao: "Prateleira B2",
-    peso: "0,35",
-    dimensoes: "12 x 8 x 4",
-    validade: "2027-06-20",
-  },
-  {
-    id: "prd-003",
-    produto: "Pneu Traseiro 90/90",
-    codigo: "PRD-003",
-    descricao: "Pneu traseiro urbano com boa aderência para uso diário",
-    fornecedor: "Pneus Prime",
-    categoria: "Pneus",
-    valor: "R$189,90",
-    ativo: true,
-    precoCusto: "R$132,00",
-    quantidade: "12",
-    quantidadeMinima: "6",
-    codigoBarras: "7891000100034",
-    localizacao: "Rack P1",
-    peso: "3,60",
-    dimensoes: "58 x 58 x 10",
-    validade: "2028-03-15",
-  },
-  {
-    id: "prd-004",
-    produto: "Capacete Pro Tork",
-    codigo: "PRD-004",
-    descricao: "Capacete fechado com viseira cristal e selo Inmetro",
-    fornecedor: "Distribuidora Alfa",
-    categoria: "Acessórios",
-    valor: "R$249,90",
-    ativo: true,
-    precoCusto: "R$170,00",
-    quantidade: "32",
-    quantidadeMinima: "8",
-    codigoBarras: "7891000100041",
-    localizacao: "Vitrine C1",
-    peso: "1,35",
-    dimensoes: "35 x 28 x 28",
-    validade: "2029-01-10",
-  },
-  {
-    id: "prd-005",
-    produto: "Kit Relação CG 160",
-    codigo: "PRD-005",
-    descricao: "Kit com coroa, pinhão e corrente para manutenção completa",
-    fornecedor: "Moto Peças Brasil",
-    categoria: "Transmissão",
-    valor: "R$142,50",
-    ativo: true,
-    precoCusto: "R$98,00",
-    quantidade: "18",
-    quantidadeMinima: "5",
-    codigoBarras: "7891000100058",
-    localizacao: "Prateleira D4",
-    peso: "1,80",
-    dimensoes: "26 x 18 x 6",
-    validade: "2028-11-12",
-  },
-  {
-    id: "prd-006",
-    produto: "Filtro de Ar",
-    codigo: "PRD-006",
-    descricao: "Filtro de ar para reposição em serviços preventivos",
-    fornecedor: "Peças Rápidas",
-    categoria: "Motor",
-    valor: "R$28,90",
-    ativo: false,
-    precoCusto: "R$16,00",
-    quantidade: "3",
-    quantidadeMinima: "10",
-    codigoBarras: "7891000100065",
-    localizacao: "Prateleira A3",
-    peso: "0,20",
-    dimensoes: "14 x 10 x 5",
-    validade: "2027-08-30",
-  },
-  {
-    id: "prd-007",
-    produto: "Vela de Ignição",
-    codigo: "PRD-007",
-    descricao: "Vela resistente para partida estável e melhor queima",
-    fornecedor: "Peças Rápidas",
-    categoria: "Elétrica",
-    valor: "R$24,90",
-    ativo: true,
-    precoCusto: "R$13,50",
-    quantidade: "40",
-    quantidadeMinima: "15",
-    codigoBarras: "7891000100072",
-    localizacao: "Gaveta E2",
-    peso: "0,08",
-    dimensoes: "8 x 3 x 3",
-    validade: "2028-05-05",
-  },
-  {
-    id: "prd-008",
-    produto: "Retrovisor Universal",
-    codigo: "PRD-008",
-    descricao: "Par de retrovisores para reposição no balcão e oficina",
-    fornecedor: "Distribuidora Alfa",
-    categoria: "Acessórios",
-    valor: "R$59,90",
-    ativo: true,
-    precoCusto: "R$36,00",
-    quantidade: "24",
-    quantidadeMinima: "8",
-    codigoBarras: "7891000100089",
-    localizacao: "Prateleira C3",
-    peso: "0,55",
-    dimensoes: "28 x 16 x 8",
-    validade: "2029-04-18",
-  },
-  {
-    id: "prd-009",
-    produto: "Bateria 12V",
-    codigo: "PRD-009",
-    descricao: "Bateria selada para motos com partida elétrica",
-    fornecedor: "Energia Moto",
-    categoria: "Elétrica",
-    valor: "R$210,00",
-    ativo: true,
-    precoCusto: "R$150,00",
-    quantidade: "9",
-    quantidadeMinima: "4",
-    codigoBarras: "7891000100096",
-    localizacao: "Rack E1",
-    peso: "2,40",
-    dimensoes: "15 x 9 x 10",
-    validade: "2026-10-22",
-  },
-];
-
 export function ProdutosPage() {
-  const [produtos, setProdutos] = useState(produtosMock);
+  const { produtos, setProdutos, toggleVisivelLoja } = useProdutos();
   const [modalAtivo, setModalAtivo] = useState<ModalAtivo>(null);
   const [produtoEditandoId, setProdutoEditandoId] = useState<string | null>(null);
   const [produtoForm, setProdutoForm] = useState(produtoInicial);
@@ -314,7 +115,7 @@ export function ProdutosPage() {
     setModalAtivo("produto");
   };
 
-  const abrirEdicaoProduto = (produto: ProdutoInventario) => {
+  const abrirEdicaoProduto = (produto: Produto) => {
     setProdutoForm(produto);
     setProdutoEditandoId(produto.id);
     setModalAtivo("produto");
@@ -423,7 +224,10 @@ export function ProdutosPage() {
       <InventoryHeader>
         <InventoryTitle>
           <h1>Inventário de produtos</h1>
-          <p>Gerencie seus itens de estoque e níveis de inventário</p>
+          <p>
+            Cadastre e edite peças no sistema. Para exibir na loja, use{" "}
+            <Link to={adminRoutes.cadastroAtendimento}>Cadastros → Atendimento</Link>.
+          </p>
         </InventoryTitle>
 
         <HeaderActions>
@@ -454,6 +258,7 @@ export function ProdutosPage() {
                 <th>Categoria</th>
                 <th>Valor</th>
                 <th>Status</th>
+                <th>Na loja</th>
                 <th>Ação</th>
               </tr>
             </thead>
@@ -481,9 +286,19 @@ export function ProdutosPage() {
                       $active={produto.ativo}
                       onClick={() => alternarStatusProduto(produto.id)}
                       aria-label={`Alterar status de ${produto.produto}`}
-                      title="Clique para alternar ativo/inativo"
+                      title="Ativo no inventário (não altera a vitrine da loja)"
                     >
                       {produto.ativo ? "Ativo" : "Inativo"}
+                    </StatusBadge>
+                  </td>
+                  <td>
+                    <StatusBadge
+                      type="button"
+                      $active={produto.visivelLoja}
+                      onClick={() => toggleVisivelLoja(produto.id)}
+                      title="Exibir ou ocultar na loja e no balcão do atendente"
+                    >
+                      {produto.visivelLoja ? "Na loja" : "Oculto"}
                     </StatusBadge>
                   </td>
                   <td>
@@ -723,7 +538,9 @@ export function ProdutosPage() {
                       checked={produtoForm.ativo}
                       onChange={atualizarStatus}
                     />
-                    <label htmlFor="produto-ativo">Produto ativo</label>
+                    <label htmlFor="produto-ativo">
+                      Ativo no inventário (vitrine: coluna Na loja)
+                    </label>
                   </CheckboxField>
                 </FormGrid>
 

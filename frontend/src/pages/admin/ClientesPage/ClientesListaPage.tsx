@@ -1,5 +1,5 @@
 import { Text } from "@components/atoms/Text";
-import { clientesMock } from "@/data/mockClientes";
+import { useAtendimento } from "@/contexts/AtendimentoContext";
 import { Banner, Card, Page, Table } from "./ClientesPage.styles";
 
 function formatarData(iso: string) {
@@ -7,6 +7,8 @@ function formatarData(iso: string) {
 }
 
 export function ClientesListaPage() {
+  const { clientes } = useAtendimento();
+
   return (
     <Page>
       <div>
@@ -14,13 +16,13 @@ export function ClientesListaPage() {
           Clientes cadastrados
         </Text>
         <Text variant="body" color="muted" style={{ marginTop: "0.35rem" }}>
-          Clientes que se registraram na loja online
+          Clientes da loja e cadastrados no balcão pelo atendente
         </Text>
       </div>
 
       <Banner>
-        Dados de demonstração. Quando o cliente se cadastrar na loja, os dados
-        aparecerão aqui via integração com o backend.
+        {clientes.length} cliente(s) no sistema (mock + cadastros do
+        atendimento). Com o backend, sincroniza com a loja online.
       </Banner>
 
       <Card>
@@ -34,7 +36,7 @@ export function ClientesListaPage() {
             </tr>
           </thead>
           <tbody>
-            {clientesMock.map((c) => (
+            {clientes.map((c) => (
               <tr key={c.id}>
                 <td>{c.nome}</td>
                 <td>
