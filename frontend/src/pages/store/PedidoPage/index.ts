@@ -1,0 +1,1 @@
+export { PedidoPage } from "./PedidoPage";

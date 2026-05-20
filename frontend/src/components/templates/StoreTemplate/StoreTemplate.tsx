@@ -1,9 +1,8 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import styled from "styled-components";
 import { Text } from "@components/atoms/Text";
 import { AccountAvatar } from "@components/molecules/AccountAvatar";
 import { ThemeToggle } from "@components/molecules/ThemeToggle";
-import { adminRoutes } from "@/config/adminMenu";
 
 const Layout = styled.div`
   min-height: 100vh;
@@ -22,6 +21,34 @@ const TopBar = styled.header`
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
 `;
 
+const BrandArea = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+`;
+
+const NavMenu = styled.nav`
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+`;
+
+const NavLink = styled.button<{ $active: boolean }>`
+  background: none;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: ${({ $active, theme }) => ($active ? "#C41E1E" : theme.colors.textMuted || "#666")};
+  cursor: pointer;
+  padding: 0.25rem 0;
+  border-bottom: 2px solid ${({ $active }) => ($active ? "#C41E1E" : "transparent")};
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: #C41E1E;
+  }
+`;
+
 const Actions = styled.div`
   display: flex;
   align-items: center;
@@ -34,17 +61,32 @@ const Content = styled.main`
 `;
 
 export function StoreTemplate() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   return (
     <Layout>
       <TopBar>
-        <Text as="h1" variant="h2" weight="bold" color="primary">
-          JB Motos — Loja
-        </Text>
+        <BrandArea>
+          <Text as="h1" variant="h2" weight="bold" color="primary" style={{ cursor: "pointer" }} onClick={() => navigate("/loja")}>
+            JBM
+          </Text>
+          
+          <NavMenu>
+            <NavLink $active={location.pathname === "/loja"} onClick={() => navigate("/loja")}>
+              Início
+            </NavLink>
+            <NavLink $active={location.pathname === "/loja/pedido"} onClick={() => navigate("/loja/pedido")}>
+              Fazer Pedido
+            </NavLink>
+          </NavMenu>
+        </BrandArea>
+
         <Actions>
           <ThemeToggle />
           <AccountAvatar
             label="Minha conta"
-            to={adminRoutes.dashboard}
+            to="/loja/minha-conta"
             title="Ir para área administrativa"
           />
         </Actions>

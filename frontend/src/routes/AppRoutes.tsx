@@ -20,6 +20,7 @@ import {
 } from "@pages/admin/ClientesPage";
 import { LojaHomePage } from "@pages/store/LojaHomePage";
 import { MinhaContaPage } from "@pages/store/MinhaContaPage";
+import { PedidoPage } from "@pages/store/PedidoPage";
 
 export function AppRoutes() {
   return (
@@ -54,6 +55,7 @@ export function AppRoutes() {
       <Route path="/loja" element={<StoreTemplate />}>
         <Route index element={<LojaHomePage />} />
         <Route path="minha-conta" element={<MinhaContaPage />} />
+        <Route path="pedido" element={<PedidoPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/admin" replace />} />
