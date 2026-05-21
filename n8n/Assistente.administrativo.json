@@ -1,0 +1,370 @@
+{
+  "name": "JB Motos - Assistente Administrativo",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Assistente Administrativo - JB Motos\nFluxo interno para proprietário, administrativo e funcionários.\n\nResponsabilidades:\n- Importação de planilha mista\n- Apoio financeiro\n- Apoio ao mecânico\n- Serviços pendentes\n- Entrada e saída de estoque\n- Organização operacional",
+        "height": 280,
+        "width": 380,
+        "color": 4
+      },
+      "id": "a10fbd2f-8ff4-439f-bd8b-5c5dd4ad0100",
+      "name": "📌 Visão Administrativo",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        20
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Contrato esperado\nPOST /webhook/jb-motos/assistente-administrativo\n\nBody sugerido:\n```json\n{\n  \"usuario\": \"Juliana\",\n  \"perfil\": \"administrativo\",\n  \"message\": \"importar planilha\",\n  \"file\": null\n}\n```\n\nA resposta retorna ações para o frontend executar.",
+        "height": 300,
+        "width": 370,
+        "color": 5
+      },
+      "id": "a10fbd2f-8ff4-439f-bd8b-5c5dd4ad0101",
+      "name": "📄 Contrato HTTP Admin",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        160,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "jb-motos/assistente-administrativo",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a10fbd2f-8ff4-439f-bd8b-5c5dd4ad0001",
+      "name": "Webhook - Chat Administrativo",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "jb-motos-assistente-administrativo"
+    },
+    {
+      "parameters": {
+        "content": "## Entrada interna\nRecebe mensagens do chat administrativo.\n\nDepois conectar:\n- autenticação do funcionário\n- perfil/permissões\n- anexos de planilha\n- histórico de ações",
+        "height": 230,
+        "width": 310,
+        "color": 3
+      },
+      "id": "a10fbd2f-8ff4-439f-bd8b-5c5dd4ad0102",
+      "name": "🧭 Entrada Admin",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        210,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body ?? $json;\nconst messageRaw = String(body.message ?? body.text ?? body.pergunta ?? '').trim();\nreturn [{\n  ...$json,\n  body,\n  usuario: body.usuario ?? body.user ?? 'administrativo',\n  perfil: body.perfil ?? 'administrativo',\n  messageRaw,\n  message: messageRaw.toLowerCase(),\n  arquivo: body.file ?? body.arquivo ?? null,\n  receivedAt: new Date().toISOString()\n}];"
+      },
+      "id": "a10fbd2f-8ff4-439f-bd8b-5c5dd4ad0004",
+      "name": "01 - Normalizar Entrada",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Normalização\nPadroniza campos internos.\n\nCampos criados:\n- usuario\n- perfil\n- message\n- arquivo\n- receivedAt\n\nEsse nó evita duplicação de lógica nos próximos blocos.",
+        "height": 250,
+        "width": 330,
+        "color": 6
+      },
+      "id": "a10fbd2f-8ff4-439f-bd8b-5c5dd4ad0103",
+      "name": "🧼 Normalização Admin",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        470,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  ...$json,\n  context: {\n    projeto: 'JB Motos',\n    tom: 'Profissional, direto, operacional e seguro',\n    permissoes: {\n      administrativo: ['produtos', 'fornecedores', 'estoque', 'financeiro', 'servicos'],\n      mecanico: ['servicos', 'estoque_saida'],\n      proprietario: ['todos']\n    },\n    regras: [\n      'Nao misturar estado de produtos com estoque antes da integracao correta',\n      'Importacao mista separa produtos e fornecedores',\n      'Saida de estoque deve estar ligada a servico concluido',\n      'Financeiro deve separar entradas, saidas e pagamentos de cliente'\n    ],\n    rotas: {\n      produtos: '/admin/produtos',\n      fornecedores: '/admin/cadastros/fornecedores',\n      financeiro: '/admin/financeiro',\n      servicos: '/admin/servicos',\n      estoqueEntrada: '/admin/estoque/entrada',\n      estoqueSaida: '/admin/estoque/saida',\n      movimentacoes: '/admin/estoque/adicionar'\n    }\n  }\n}];"
+      },
+      "id": "a10fbd2f-8ff4-439f-bd8b-5c5dd4ad0005",
+      "name": "02 - Contexto Operacional",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        760,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Contexto operacional\nDefine regras de negócio do administrativo.\n\nCuidado importante:\n- Produto e estoque são relacionados, mas não devem usar o mesmo estado local sem controle.\n- Fornecedor tem contexto próprio.\n- Saída de peça deve apontar para serviço concluído.",
+        "height": 280,
+        "width": 350,
+        "color": 4
+      },
+      "id": "a10fbd2f-8ff4-439f-bd8b-5c5dd4ad0104",
+      "name": "🏢 Contexto Administrativo",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        730,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const systemPrompt = `Voce e a IA administrativa da JB Motos. Classifique a solicitacao interna e devolva somente JSON valido.\n\nObjetivo: dividir as demandas entre importacao, financeiro, servicos/mecanico, estoque, produtos/fornecedores e fallback.\n\nRegras:\n- Seja operacional e seguro.\n- Nunca misture produto e estoque sem indicar validacao.\n- Saida de estoque deve estar ligada a servico concluido.\n- Importacao de planilha deve separar produtos e fornecedores.\n- Financeiro pode orientar, mas deve respeitar permissao do usuario.\n\nFormato obrigatorio:\n{\n  \"intent\": \"boas_vindas|importacao_planilha|financeiro|servicos_mecanico|estoque|produtos_fornecedores|fallback\",\n  \"confidence\": 0.0,\n  \"replySuggestion\": \"texto curto\",\n  \"entities\": {\n    \"modulo\": null,\n    \"arquivo\": false,\n    \"periodo\": null,\n    \"status\": null\n  },\n  \"nextStep\": \"acao recomendada\",\n  \"riskLevel\": \"baixo|medio|alto\"\n}`;\n\nreturn [{\n  ...$json,\n  aiRequest: {\n    model: process.env.JB_MOTOS_IA_MODEL || 'gpt-4o-mini',\n    temperature: 0.15,\n    response_format: { type: 'json_object' },\n    messages: [\n      { role: 'system', content: systemPrompt },\n      { role: 'user', content: JSON.stringify({ mensagem: $json.messageRaw, usuario: $json.usuario, perfil: $json.perfil, temArquivo: Boolean($json.arquivo), contexto: $json.context }) }\n    ]\n  }\n}];"
+      },
+      "id": "a10fbd2f-8ff4-439f-bd8b-5c5dd4ad0007",
+      "name": "03 - Preparar Prompt da IA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Camada de IA administrativa\nA IA faz a primeira divisao da solicitacao.\n\nVariaveis no n8n:\n- JB_MOTOS_IA_API_URL\n- JB_MOTOS_IA_API_KEY\n- JB_MOTOS_IA_MODEL\n\nDepois o motor local valida e transforma em actions para o painel.",
+        "height": 280,
+        "width": 360,
+        "color": 6
+      },
+      "id": "a10fbd2f-8ff4-439f-bd8b-5c5dd4ad0108",
+      "name": "🤖 IA - Preparação Admin",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1010,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const apiUrl = process.env.JB_MOTOS_IA_API_URL;\nconst apiKey = process.env.JB_MOTOS_IA_API_KEY;\n\nif (!apiUrl || !apiKey) {\n  return [{\n    ...$json,\n    ai: {\n      enabled: false,\n      status: 'missing_config',\n      message: 'Configure JB_MOTOS_IA_API_URL e JB_MOTOS_IA_API_KEY no ambiente do n8n.'\n    }\n  }];\n}\n\ntry {\n  const response = await this.helpers.httpRequest({\n    method: 'POST',\n    url: apiUrl,\n    headers: {\n      Authorization: `Bearer ${apiKey}`,\n      'Content-Type': 'application/json'\n    },\n    body: $json.aiRequest,\n    json: true,\n    timeout: 30000\n  });\n\n  const content = response?.choices?.[0]?.message?.content ?? response?.output_text ?? response?.reply ?? response;\n  const decision = typeof content === 'string' ? JSON.parse(content) : content;\n\n  return [{\n    ...$json,\n    ai: {\n      enabled: true,\n      status: 'ok',\n      provider: 'external_api',\n      decision\n    }\n  }];\n} catch (error) {\n  return [{\n    ...$json,\n    ai: {\n      enabled: true,\n      status: 'error',\n      message: error.message\n    }\n  }];\n}"
+      },
+      "id": "a10fbd2f-8ff4-439f-bd8b-5c5dd4ad0008",
+      "name": "04 - Chamar IA por API",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## API da IA\nChamada real para sua IA, sem salvar chave no workflow.\n\nSe a API nao estiver configurada ou falhar, o fluxo continua pelo motor local.\n\nIsso deixa o assistente profissional e resistente a erro.",
+        "height": 270,
+        "width": 360,
+        "color": 7
+      },
+      "id": "a10fbd2f-8ff4-439f-bd8b-5c5dd4ad0109",
+      "name": "🔐 IA - API Segura Admin",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1290,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body ?? $json;\nconst messageRaw = String(body.message ?? body.text ?? body.pergunta ?? '').trim();\nconst message = messageRaw.toLowerCase();\nconst usuario = body.usuario ?? body.user ?? 'administrativo';\nconst arquivo = body.file ?? body.arquivo ?? null;\nconst aiIntent = $json.ai?.decision?.intent ?? '';\n\nconst modulos = {\n  importacao: {\n    rota: '/admin/produtos',\n    descricao: 'Importação de planilha mista para produtos e fornecedores'\n  },\n  financeiro: {\n    rota: '/admin/financeiro',\n    descricao: 'Apuração diária, entradas, saídas e pagamentos'\n  },\n  servicos: {\n    rota: '/admin/servicos',\n    descricao: 'Pedidos e serviços em andamento/concluídos'\n  },\n  estoqueEntrada: {\n    rota: '/admin/estoque/entrada',\n    descricao: 'Relatório de produtos que entraram no estoque'\n  },\n  estoqueSaida: {\n    rota: '/admin/estoque/saida',\n    descricao: 'Relatório de peças que saíram por serviço'\n  },\n  movimentacoes: {\n    rota: '/admin/estoque/adicionar',\n    descricao: 'Nova movimentação de estoque'\n  }\n};\n\nfunction respostaBase(intent, reply, extra = {}) {\n  return {\n    ok: true,\n    assistant: 'administrativo',\n    usuario,\n    intent,\n    reply,\n    actions: extra.actions ?? [],\n    checklist: extra.checklist ?? [],\n    data: { ...(extra.data ?? {}), ia: $json.ai ?? null },\n    quickReplies: extra.quickReplies ?? [\n      'Importar planilha',\n      'Ver financeiro',\n      'Serviços pendentes',\n      'Movimentações de estoque'\n    ]\n  };\n}\n\nif (!message && !arquivo) {\n  return [respostaBase('boas_vindas', 'Olá! Sou o assistente administrativo da JB Motos. Posso ajudar com importação de planilhas, financeiro, estoque, serviços pendentes e apoio ao mecânico.', {\n    checklist: [\n      'Importar planilha mista de produtos e fornecedores',\n      'Abrir relatório financeiro',\n      'Listar serviços pendentes para o mecânico',\n      'Orientar entrada/saída de estoque'\n    ]\n  })];\n}\n\nif (aiIntent === 'importacao_planilha' || arquivo || message.includes('planilha') || message.includes('importar') || message.includes('arquivo')) {\n  return [respostaBase('importacao_planilha', 'Certo. Vou orientar a importação da planilha mista. O sistema deve reconhecer automaticamente produtos e fornecedores e gravar cada um na lista correta.', {\n    data: {\n      arquivoRecebido: arquivo,\n      colunasEsperadas: [\n        'produto / nome produto / peça',\n        'código produto / sku',\n        'valor venda / preço venda',\n        'quantidade / estoque',\n        'fornecedor / empresa / razão social',\n        'cnpj / contato / email / telefone'\n      ]\n    },\n    checklist: [\n      'Abrir módulo Produtos',\n      'Acionar modal Importar',\n      'Ler primeira aba da planilha',\n      'Separar linhas de produto e fornecedor',\n      'Evitar fornecedores duplicados por CNPJ, e-mail ou nome',\n      'Confirmar total importado para o usuário'\n    ],\n    actions: [\n      { type: 'navigate', payload: { route: modulos.importacao.rota } },\n      { type: 'open_import_modal', payload: { module: 'produtos', accepts: ['csv', 'xls', 'xlsx'] } },\n      { type: 'import_mixed_catalog_spreadsheet', payload: { targetProducts: true, targetSuppliers: true } }\n    ]\n  })];\n}\n\nif (aiIntent === 'financeiro' || message.includes('financeiro') || message.includes('entrada') || message.includes('saída') || message.includes('saida') || message.includes('lucro') || message.includes('pagamento')) {\n  return [respostaBase('financeiro', 'Vou te ajudar na parte financeira. Posso abrir a apuração diária, conferir entradas e saídas, ou preparar um resumo para o proprietário.', {\n    checklist: [\n      'Conferir faturamento diário',\n      'Conferir gasto real',\n      'Calcular lucro apurado',\n      'Separar pagamentos de cliente, entradas e saídas',\n      'Gerar relatório PDF ou Excel quando solicitado'\n    ],\n    actions: [\n      { type: 'navigate', payload: { route: modulos.financeiro.rota } },\n      { type: 'load_financial_summary', payload: { period: $json.ai?.decision?.entities?.periodo ?? 'current' } }\n    ]\n  })];\n}\n\nif (aiIntent === 'servicos_mecanico' || message.includes('mecânico') || message.includes('mecanico') || message.includes('serviço') || message.includes('servico') || message.includes('pedido') || message.includes('pendente')) {\n  return [respostaBase('servicos_mecanico', 'Vou auxiliar o mecânico com os pedidos e serviços pendentes. A ideia é mostrar horário, cliente, moto, serviço solicitado e peça provável para troca.', {\n    data: {\n      exemploServico: {\n        horario: '15:30',\n        cliente: 'Cliente do sistema',\n        moto: 'Honda CG 160',\n        servico: 'Troca de pastilha de freio',\n        peca: 'Pastilha de Freio',\n        status: 'pendente'\n      }\n    },\n    checklist: [\n      'Abrir módulo Serviços',\n      'Filtrar serviços pendentes',\n      'Mostrar ordem por horário',\n      'Informar peça provável para o mecânico',\n      'Após conclusão, orientar saída de estoque'\n    ],\n    actions: [\n      { type: 'navigate', payload: { route: modulos.servicos.rota } },\n      { type: 'filter_services', payload: { status: $json.ai?.decision?.entities?.status ?? 'pendente' } }\n    ]\n  })];\n}\n\nif (aiIntent === 'estoque' || message.includes('estoque') || message.includes('movimentação') || message.includes('movimentacao')) {\n  return [respostaBase('estoque', 'Posso auxiliar na entrada, saída e movimentações de estoque. Entrada registra fornecedor e quantidade; saída deve ficar ligada ao serviço concluído.', {\n    checklist: [\n      'Entrada: fornecedor, produto, quantidade e motivo',\n      'Saída: serviço concluído, peça usada, moto e responsável',\n      'Movimentações: ajustes manuais e auditoria'\n    ],\n    actions: [\n      { type: 'navigate', payload: { route: modulos.movimentacoes.rota } }\n    ],\n    quickReplies: ['Entrada de estoque', 'Saída por serviço', 'Histórico de movimentações']\n  })];\n}\n\nif (aiIntent === 'produtos_fornecedores' || message.includes('produto') || message.includes('fornecedor')) {\n  return [respostaBase('produtos_fornecedores', 'Posso ajudar a localizar, cadastrar, importar ou revisar produtos e fornecedores sem misturar os módulos.', {\n    checklist: [\n      'Produtos ficam no inventário administrativo',\n      'Fornecedores ficam na lista de fornecedores',\n      'A loja usa apenas os produtos marcados como visíveis na vitrine',\n      'Importação mista separa cada tipo automaticamente'\n    ],\n    actions: [\n      { type: 'navigate', payload: { route: modulos.importacao.rota } }\n    ]\n  })];\n}\n\nreturn [respostaBase('fallback', $json.ai?.decision?.replySuggestion || 'Posso ajudar com importação de planilha, produtos, fornecedores, financeiro, estoque ou serviços pendentes. Me diga qual área você quer abrir ou automatizar.', {\n  quickReplies: ['Importar planilha', 'Financeiro', 'Serviços pendentes', 'Estoque']\n})];"
+      },
+      "id": "a10fbd2f-8ff4-439f-bd8b-5c5dd4ad0002",
+      "name": "05 - Motor Administrativo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Motor administrativo\nIntenções cobertas:\n\n1. Importar planilha\n2. Financeiro\n3. Serviços/mecânico\n4. Estoque\n5. Produtos e fornecedores\n6. Fallback operacional\n\nDepois pode receber nós reais de banco/API entre o motor e a resposta.",
+        "height": 300,
+        "width": 350,
+        "color": 2
+      },
+      "id": "a10fbd2f-8ff4-439f-bd8b-5c5dd4ad0105",
+      "name": "🧠 Motor Admin com IA",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1570,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const risco = [];\nif ($json.intent === 'importacao_planilha') risco.push('Validar colunas antes de gravar');\nif ($json.intent === 'financeiro') risco.push('Nao expor dados sensiveis sem perfil autorizado');\nreturn [{\n  ...$json,\n  audit: {\n    workflow: 'Assistente.Administrativo',\n    version: 'admin-profissional-v2',\n    timestamp: new Date().toISOString(),\n    usuario: $json.usuario,\n    perfil: $json.perfil,\n    intent: $json.intent,\n    riscos: risco\n  }\n}];"
+      },
+      "id": "a10fbd2f-8ff4-439f-bd8b-5c5dd4ad0006",
+      "name": "06 - Auditoria e Segurança",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Auditoria e segurança\nPonto preparado para logs e controle.\n\nDepois conectar:\n- Supabase\n- tabela de auditoria\n- permissões por usuário\n- alertas para proprietário\n- histórico de importações",
+        "height": 270,
+        "width": 340,
+        "color": 7
+      },
+      "id": "a10fbd2f-8ff4-439f-bd8b-5c5dd4ad0106",
+      "name": "🛡️ Auditoria Admin",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1850,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "a10fbd2f-8ff4-439f-bd8b-5c5dd4ad0003",
+      "name": "Responder - Administrativo",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2140,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Resposta para o painel administrativo\nO frontend deve interpretar `actions`.\n\nExemplos:\n- navigate\n- open_import_modal\n- import_mixed_catalog_spreadsheet\n- load_financial_summary\n- filter_services\n\nIsso deixa o n8n orquestrar e o React executar.",
+        "height": 280,
+        "width": 360,
+        "color": 5
+      },
+      "id": "a10fbd2f-8ff4-439f-bd8b-5c5dd4ad0107",
+      "name": "🚀 Resposta para Admin",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2110,
+        520
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook - Chat Administrativo": {
+      "main": [
+        [
+          {
+            "node": "01 - Normalizar Entrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "01 - Normalizar Entrada": {
+      "main": [
+        [
+          {
+            "node": "02 - Contexto Operacional",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "02 - Contexto Operacional": {
+      "main": [
+        [
+          {
+            "node": "03 - Preparar Prompt da IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "03 - Preparar Prompt da IA": {
+      "main": [
+        [
+          {
+            "node": "04 - Chamar IA por API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "04 - Chamar IA por API": {
+      "main": [
+        [
+          {
+            "node": "05 - Motor Administrativo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "05 - Motor Administrativo": {
+      "main": [
+        [
+          {
+            "node": "06 - Auditoria e Segurança",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "06 - Auditoria e Segurança": {
+      "main": [
+        [
+          {
+            "node": "Responder - Administrativo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "JB Motos"
+    },
+    {
+      "name": "Administrativo"
+    }
+  ],
+  "triggerCount": 0,
+  "updatedAt": "2026-05-21T00:00:00.000Z",
+  "versionId": "administrativo-v1"
+}

@@ -2,9 +2,11 @@ import { useState, type ChangeEvent } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@components/atoms/Icon";
 import { adminRoutes } from "@/config/adminMenu";
+import { useFornecedores } from "@/contexts/FornecedoresContext";
 import { produtoInicial, useProdutos } from "@/contexts/ProdutosContext";
 import type { Produto } from "@/types/produto";
 import { exportReport } from "@/utils/exportReports";
+import { importCatalogSpreadsheet } from "@/utils/importCatalogSpreadsheet";
 import {
   ActionButton,
   CheckboxField,
@@ -56,11 +58,13 @@ type ModalAtivo = "importar" | "produto" | null;
 
 export function ProdutosPage() {
   const { produtos, setProdutos, toggleVisivelLoja } = useProdutos();
+  const { fornecedores, setFornecedores } = useFornecedores();
   const [modalAtivo, setModalAtivo] = useState<ModalAtivo>(null);
   const [produtoEditandoId, setProdutoEditandoId] = useState<string | null>(null);
   const [produtoForm, setProdutoForm] = useState(produtoInicial);
   const [arquivoImportacao, setArquivoImportacao] = useState("");
   const [progressoImportacao, setProgressoImportacao] = useState(0);
+  const [resultadoImportacao, setResultadoImportacao] = useState("");
   const produtosAtivos = produtos.filter((produto) => produto.ativo).length;
   const produtosInativos = produtos.length - produtosAtivos;
   const produtosForaEstoque = produtos.filter(
@@ -102,6 +106,7 @@ export function ProdutosPage() {
     setProdutoEditandoId(null);
     setArquivoImportacao("");
     setProgressoImportacao(0);
+    setResultadoImportacao("");
     setProdutoForm(produtoInicial);
   };
 
@@ -142,12 +147,32 @@ export function ProdutosPage() {
     );
   };
 
-  const selecionarArquivo = (event: ChangeEvent<HTMLInputElement>) => {
+  const selecionarArquivo = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     setArquivoImportacao(file.name);
-    setProgressoImportacao(50);
+    setProgressoImportacao(25);
+    setResultadoImportacao("Lendo planilha e identificando produtos/fornecedores...");
+
+    try {
+      const result = await importCatalogSpreadsheet(file, {
+        produtosAtuais: produtos,
+        fornecedoresAtuais: fornecedores,
+      });
+
+      setProdutos(result.produtos);
+      setFornecedores(result.fornecedores);
+      setProgressoImportacao(100);
+      setResultadoImportacao(
+        `Importação concluída: ${result.produtosCriados} produto(s), ${result.fornecedoresCriados} fornecedor(es). Linhas ignoradas: ${result.linhasIgnoradas}.`,
+      );
+    } catch {
+      setProgressoImportacao(0);
+      setResultadoImportacao(
+        "Não foi possível importar a planilha. Verifique se o arquivo está em CSV, XLS ou XLSX e se possui cabeçalhos.",
+      );
+    }
   };
 
   const salvarProduto = () => {
@@ -363,6 +388,9 @@ export function ProdutosPage() {
                         />
                       </ProgressBar>
                       <UploadHint>{progressoImportacao}%</UploadHint>
+                      {resultadoImportacao && (
+                        <UploadHint>{resultadoImportacao}</UploadHint>
+                      )}
                     </>
                   ) : (
                     <UploadHint>
@@ -378,9 +406,9 @@ export function ProdutosPage() {
                 <ActionButton
                   type="button"
                   disabled={!arquivoImportacao}
-                  onClick={() => setProgressoImportacao(100)}
+                  onClick={fecharModal}
                 >
-                  Importar
+                  Concluir
                 </ActionButton>
               </ModalFooter>
             </UploadModal>

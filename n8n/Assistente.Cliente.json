@@ -1,0 +1,370 @@
+{
+  "name": "JB Motos - Assistente Cliente",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Assistente Cliente - JB Motos\nFluxo público para atendimento do cliente na loja.\n\nResponsabilidades:\n- Tirar dúvidas\n- Mostrar ofertas e cartazes\n- Guiar serviços\n- Simular pagamento\n- Enviar serviço/produto ao carrinho\n- Retornar ações para animação do carrinho",
+        "height": 260,
+        "width": 360,
+        "color": 4
+      },
+      "id": "b89fc5c8-0ab4-4d3b-80fa-7f3e9ccf0100",
+      "name": "📌 Visão do Assistente Cliente",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -220,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Contrato esperado do frontend\nPOST /webhook/jb-motos/assistente-cliente\n\nBody sugerido:\n```json\n{\n  \"sessionId\": \"cliente-123\",\n  \"message\": \"quero troca de óleo\",\n  \"cart\": [],\n  \"page\": \"/loja\"\n}\n```\n\nResposta sempre retorna:\n- reply\n- quickReplies\n- actions\n- data",
+        "height": 300,
+        "width": 360,
+        "color": 5
+      },
+      "id": "b89fc5c8-0ab4-4d3b-80fa-7f3e9ccf0101",
+      "name": "📄 Contrato HTTP Cliente",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        180,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "jb-motos/assistente-cliente",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "b89fc5c8-0ab4-4d3b-80fa-7f3e9ccf0001",
+      "name": "Webhook - Chat Cliente",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "jb-motos-assistente-cliente"
+    },
+    {
+      "parameters": {
+        "content": "## Entrada do chat\nEste webhook recebe mensagens do chat da loja.\n\nDepois vamos conectar:\n- autenticação por sessão\n- histórico do cliente\n- carrinho atual\n- origem da página",
+        "height": 220,
+        "width": 300,
+        "color": 3
+      },
+      "id": "b89fc5c8-0ab4-4d3b-80fa-7f3e9ccf0102",
+      "name": "🧭 Entrada do Chat",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        210,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body ?? $json;\nconst messageRaw = String(body.message ?? body.text ?? body.pergunta ?? '').trim();\nreturn [{\n  ...$json,\n  body,\n  sessionId: body.sessionId ?? body.clienteId ?? 'cliente-anonimo',\n  messageRaw,\n  message: messageRaw.toLowerCase(),\n  page: body.page ?? '/loja',\n  cart: Array.isArray(body.cart) ? body.cart : [],\n  receivedAt: new Date().toISOString()\n}];"
+      },
+      "id": "b89fc5c8-0ab4-4d3b-80fa-7f3e9ccf0004",
+      "name": "01 - Normalizar Entrada",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Normalização\nPadroniza a mensagem antes do motor de conversa.\n\nCampos criados:\n- sessionId\n- message\n- page\n- cart\n- receivedAt\n\nIsso facilita conectar IA, banco e logs depois.",
+        "height": 240,
+        "width": 320,
+        "color": 6
+      },
+      "id": "b89fc5c8-0ab4-4d3b-80fa-7f3e9ccf0103",
+      "name": "🧼 Normalização",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        470,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  ...$json,\n  context: {\n    loja: 'JB Motos',\n    tom: 'Atendimento claro, direto, educado e comercial',\n    regras: [\n      'Nunca prometer pagamento real enquanto Mercado Pago nao estiver conectado',\n      'Confirmar antes de adicionar servico ao carrinho',\n      'Quando confirmar carrinho, retornar action add_to_cart e cart_animation',\n      'Quando for duvida de pagamento, explicar que por enquanto e simulacao'\n    ],\n    rotas: {\n      loja: '/loja',\n      ofertas: '/loja#ofertas',\n      servicos: '/loja#servicos',\n      carrinho: '/loja/carrinho',\n      conta: '/loja/minha-conta'\n    }\n  }\n}];"
+      },
+      "id": "b89fc5c8-0ab4-4d3b-80fa-7f3e9ccf0005",
+      "name": "02 - Contexto do Projeto",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        760,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Contexto JB Motos\nEste nó injeta regras do projeto.\n\nImportante:\n- Pagamento Mercado Pago ainda é simulado\n- Carrinho recebe ações, não redireciona sozinho\n- Serviços sugerem peça + mão de obra\n- Cartazes/ofertas levam para a loja",
+        "height": 250,
+        "width": 330,
+        "color": 4
+      },
+      "id": "b89fc5c8-0ab4-4d3b-80fa-7f3e9ccf0104",
+      "name": "🏍️ Contexto JB Motos",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        730,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const catalogoResumo = {\n  ofertas: ['Oleo Motor 10W30', 'Capacete Pro Tork', 'Pastilha de Freio'],\n  cartazes: ['Revisao preventiva', 'Promocoes da semana'],\n  servicos: ['Troca de oleo', 'Troca de pastilha de freio', 'Troca de relacao', 'Troca de pneu']\n};\n\nconst systemPrompt = `Voce e a IA de atendimento da JB Motos. Classifique a mensagem do cliente e devolva somente JSON valido.\n\nObjetivo: dividir a conversa entre ofertas, cartazes, servicos, pagamento, carrinho e fallback.\n\nRegras:\n- Nao prometa pagamento real. Mercado Pago ainda e simulacao.\n- Para servicos, identifique servico desejado e se o cliente confirmou adicionar ao carrinho.\n- Para carrinho, retorne action sugerida de navegacao ou add_to_cart quando fizer sentido.\n- Responda sempre em portugues do Brasil.\n\nFormato obrigatorio:\n{\n  \"intent\": \"boas_vindas|ofertas_cartazes|lista_servicos|confirmar_servico|servico_confirmado|pagamento|carrinho|fallback\",\n  \"confidence\": 0.0,\n  \"replySuggestion\": \"texto curto\",\n  \"entities\": {\n    \"servico\": null,\n    \"produto\": null,\n    \"confirmou\": false\n  },\n  \"nextStep\": \"acao recomendada\"\n}`;\n\nreturn [{\n  ...$json,\n  aiRequest: {\n    model: process.env.JB_MOTOS_IA_MODEL || 'gpt-4o-mini',\n    temperature: 0.2,\n    response_format: { type: 'json_object' },\n    messages: [\n      { role: 'system', content: systemPrompt },\n      { role: 'user', content: JSON.stringify({ mensagem: $json.messageRaw, pagina: $json.page, carrinho: $json.cart, catalogo: catalogoResumo }) }\n    ]\n  }\n}];"
+      },
+      "id": "b89fc5c8-0ab4-4d3b-80fa-7f3e9ccf0007",
+      "name": "03 - Preparar Prompt da IA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Camada de IA\nEste ponto prepara a mensagem para a IA dividir o atendimento.\n\nVariaveis no n8n:\n- JB_MOTOS_IA_API_URL\n- JB_MOTOS_IA_API_KEY\n- JB_MOTOS_IA_MODEL\n\nA IA classifica a intencao, mas o motor local continua como seguranca.",
+        "height": 280,
+        "width": 350,
+        "color": 6
+      },
+      "id": "b89fc5c8-0ab4-4d3b-80fa-7f3e9ccf0108",
+      "name": "🤖 IA - Preparação Cliente",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1010,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const apiUrl = process.env.JB_MOTOS_IA_API_URL;\nconst apiKey = process.env.JB_MOTOS_IA_API_KEY;\n\nif (!apiUrl || !apiKey) {\n  return [{\n    ...$json,\n    ai: {\n      enabled: false,\n      status: 'missing_config',\n      message: 'Configure JB_MOTOS_IA_API_URL e JB_MOTOS_IA_API_KEY no ambiente do n8n.'\n    }\n  }];\n}\n\ntry {\n  const response = await this.helpers.httpRequest({\n    method: 'POST',\n    url: apiUrl,\n    headers: {\n      Authorization: `Bearer ${apiKey}`,\n      'Content-Type': 'application/json'\n    },\n    body: $json.aiRequest,\n    json: true,\n    timeout: 30000\n  });\n\n  const content = response?.choices?.[0]?.message?.content ?? response?.output_text ?? response?.reply ?? response;\n  const decision = typeof content === 'string' ? JSON.parse(content) : content;\n\n  return [{\n    ...$json,\n    ai: {\n      enabled: true,\n      status: 'ok',\n      provider: 'external_api',\n      decision\n    }\n  }];\n} catch (error) {\n  return [{\n    ...$json,\n    ai: {\n      enabled: true,\n      status: 'error',\n      message: error.message\n    }\n  }];\n}"
+      },
+      "id": "b89fc5c8-0ab4-4d3b-80fa-7f3e9ccf0008",
+      "name": "04 - Chamar IA por API",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## API da IA\nEste node chama a API real da IA usando variaveis de ambiente.\n\nEle nao guarda chave dentro do JSON.\n\nSe a API falhar ou nao estiver configurada, o fluxo segue pelo motor local para nao parar o atendimento.",
+        "height": 260,
+        "width": 350,
+        "color": 7
+      },
+      "id": "b89fc5c8-0ab4-4d3b-80fa-7f3e9ccf0109",
+      "name": "🔐 IA - API Segura",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1290,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body ?? $json;\nconst messageRaw = String(body.message ?? body.text ?? body.pergunta ?? '').trim();\nconst message = messageRaw.toLowerCase();\nconst sessionId = body.sessionId ?? body.clienteId ?? 'cliente-anonimo';\nconst aiIntent = $json.ai?.decision?.intent ?? '';\nconst aiEntities = $json.ai?.decision?.entities ?? {};\n\nconst catalogo = {\n  ofertas: [\n    { id: 'oferta-oleo-10w30', nome: 'Óleo Motor 10W30', preco: 48.9, categoria: 'Lubrificantes' },\n    { id: 'oferta-capacete-pro-tork', nome: 'Capacete Pro Tork', preco: 249.9, categoria: 'Acessórios' },\n    { id: 'oferta-pastilha-freio', nome: 'Pastilha de Freio', preco: 35, categoria: 'Freios' }\n  ],\n  cartazes: [\n    { id: 'cartaz-revisao', titulo: 'Revisão preventiva', rota: '/loja#servicos' },\n    { id: 'cartaz-promocoes', titulo: 'Promoções da semana', rota: '/loja#ofertas' }\n  ],\n  servicos: [\n    { id: 'serv-troca-oleo', nome: 'Troca de óleo', preco: 35, pecaSugerida: 'Óleo Motor 10W30', pecaPreco: 48.9 },\n    { id: 'serv-pastilha-freio', nome: 'Troca de pastilha de freio', preco: 60, pecaSugerida: 'Pastilha de Freio', pecaPreco: 35 },\n    { id: 'serv-relacao', nome: 'Troca de relação', preco: 90, pecaSugerida: 'Kit Relação CG 160', pecaPreco: 142.5 },\n    { id: 'serv-pneu', nome: 'Troca de pneu', preco: 45, pecaSugerida: 'Pneu Traseiro 90/90', pecaPreco: 189.9 }\n  ]\n};\n\nfunction moeda(valor) {\n  return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });\n}\n\nfunction detectarServico() {\n  const termoIa = String(aiEntities.servico ?? '').toLowerCase();\n  return catalogo.servicos.find((servico) => {\n    const nome = servico.nome.toLowerCase();\n    return nome.includes(termoIa) || termoIa.includes(nome) || message.includes(nome) || nome.split(' ').some((parte) => parte.length > 3 && message.includes(parte));\n  });\n}\n\nfunction respostaBase(intent, reply, extra = {}) {\n  return {\n    ok: true,\n    assistant: 'cliente',\n    sessionId,\n    intent,\n    reply,\n    quickReplies: extra.quickReplies ?? ['Ver ofertas', 'Ver serviços', 'Formas de pagamento', 'Ir para carrinho'],\n    actions: extra.actions ?? [],\n    data: { ...(extra.data ?? {}), ia: $json.ai ?? null }\n  };\n}\n\nif (!message) {\n  return [respostaBase('boas_vindas', 'Olá! Sou o assistente da JB Motos. Posso te ajudar com ofertas, serviços, formas de pagamento ou levar itens para o carrinho.', {\n    quickReplies: ['Ofertas', 'Cartazes', 'Serviços', 'Formas de pagamento']\n  })];\n}\n\nif (aiIntent === 'pagamento' || message.includes('pagamento') || message.includes('pagar') || message.includes('pix') || message.includes('cartao') || message.includes('cartão')) {\n  return [respostaBase('pagamento', 'Hoje trabalhamos com simulação de pagamento para testes: PIX, cartão, dinheiro e pagamento no balcão. Quando o Mercado Pago for conectado, essa etapa vai abrir o checkout real.', {\n    actions: [{ type: 'navigate', payload: { route: '/loja/minha-conta' } }]\n  })];\n}\n\nif (aiIntent === 'ofertas_cartazes' || message.includes('oferta') || message.includes('promo') || message.includes('cartaz')) {\n  return [respostaBase('ofertas_cartazes', 'Encontrei ofertas e cartazes ativos. Vou te direcionar para a área correta da loja.', {\n    data: { ofertas: catalogo.ofertas, cartazes: catalogo.cartazes },\n    actions: [{ type: 'navigate', payload: { route: '/loja#ofertas' } }],\n    quickReplies: catalogo.ofertas.map((item) => item.nome)\n  })];\n}\n\nif (['lista_servicos', 'confirmar_servico', 'servico_confirmado'].includes(aiIntent) || message.includes('serviço') || message.includes('servico') || message.includes('revisao') || message.includes('revisão') || detectarServico()) {\n  const servico = detectarServico();\n  if (!servico) {\n    return [respostaBase('lista_servicos', 'Temos estes serviços disponíveis. Escolha um para eu te mostrar peça sugerida e valor.', {\n      data: { servicos: catalogo.servicos },\n      quickReplies: catalogo.servicos.map((item) => item.nome)\n    })];\n  }\n\n  const confirmou = Boolean(aiEntities.confirmou) || ['confirmo', 'quero', 'adicionar', 'pode colocar', 'fechar'].some((termo) => message.includes(termo));\n  const itemCarrinho = {\n    id: servico.id,\n    nome: servico.nome,\n    tipo: 'servico',\n    precoServico: servico.preco,\n    peca: servico.pecaSugerida,\n    precoPeca: servico.pecaPreco,\n    total: servico.preco + servico.pecaPreco\n  };\n\n  if (confirmou) {\n    return [respostaBase('servico_confirmado', `Perfeito. Adicionei ${servico.nome} ao carrinho. Serviço: ${moeda(servico.preco)} + peça sugerida (${servico.pecaSugerida}): ${moeda(servico.pecaPreco)}. Total: ${moeda(itemCarrinho.total)}.`, {\n      data: { itemCarrinho },\n      actions: [\n        { type: 'add_to_cart', payload: itemCarrinho },\n        { type: 'cart_animation', payload: { increment: 1, target: 'cart-icon' } }\n      ],\n      quickReplies: ['Ir para carrinho', 'Ver mais serviços', 'Continuar comprando']\n    })];\n  }\n\n  return [respostaBase('confirmar_servico', `Você escolheu ${servico.nome}. Para esse serviço, sugerimos a peça ${servico.pecaSugerida}. Serviço: ${moeda(servico.preco)} + peça: ${moeda(servico.pecaPreco)}. Deseja adicionar ao carrinho?`, {\n    data: { itemCarrinho },\n    quickReplies: [`Confirmo ${servico.nome}`, 'Ver outros serviços', 'Cancelar']\n  })];\n}\n\nif (aiIntent === 'carrinho' || message.includes('carrinho') || message.includes('finalizar') || message.includes('checkout')) {\n  return [respostaBase('carrinho', 'Certo. Vou abrir o carrinho para você revisar os itens e finalizar a compra.', {\n    actions: [{ type: 'navigate', payload: { route: '/loja/carrinho' } }]\n  })];\n}\n\nreturn [respostaBase('fallback', $json.ai?.decision?.replySuggestion || 'Posso te ajudar com ofertas, cartazes, serviços, formas de pagamento ou carrinho. O que você deseja fazer agora?', {\n  quickReplies: ['Ver ofertas', 'Ver serviços', 'Formas de pagamento', 'Carrinho']\n})];"
+      },
+      "id": "b89fc5c8-0ab4-4d3b-80fa-7f3e9ccf0002",
+      "name": "05 - Motor Conversacional Cliente",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Motor conversacional\nAqui ficam as intenções principais:\n\n1. Boas-vindas\n2. Pagamento\n3. Ofertas/cartazes\n4. Serviços\n5. Confirmação de serviço\n6. Carrinho\n7. Fallback\n\nDepois podemos trocar parte disso por OpenAI sem mudar o contrato de resposta.",
+        "height": 300,
+        "width": 340,
+        "color": 2
+      },
+      "id": "b89fc5c8-0ab4-4d3b-80fa-7f3e9ccf0105",
+      "name": "🧠 Motor Cliente com IA",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1570,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  ...$json,\n  audit: {\n    workflow: 'Assistente.Cliente',\n    version: 'cliente-profissional-v2',\n    timestamp: new Date().toISOString(),\n    intent: $json.intent,\n    sessionId: $json.sessionId,\n    actionsCount: Array.isArray($json.actions) ? $json.actions.length : 0\n  }\n}];"
+      },
+      "id": "b89fc5c8-0ab4-4d3b-80fa-7f3e9ccf0006",
+      "name": "06 - Auditoria da Resposta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Auditoria\nNó preparado para logs futuros.\n\nDepois conectar em:\n- Supabase\n- PostgreSQL\n- Google Sheets\n- painel administrativo\n\nPor enquanto ele devolve metadados junto da resposta.",
+        "height": 240,
+        "width": 320,
+        "color": 7
+      },
+      "id": "b89fc5c8-0ab4-4d3b-80fa-7f3e9ccf0106",
+      "name": "🧾 Auditoria",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1850,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "b89fc5c8-0ab4-4d3b-80fa-7f3e9ccf0003",
+      "name": "Responder - Cliente",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2140,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Saída para o frontend\nO frontend deve interpretar `actions`.\n\nExemplos:\n- navigate\n- add_to_cart\n- cart_animation\n\nA animação do carrinho deve ser feita no React quando receber `cart_animation`.",
+        "height": 240,
+        "width": 320,
+        "color": 5
+      },
+      "id": "b89fc5c8-0ab4-4d3b-80fa-7f3e9ccf0107",
+      "name": "🚀 Resposta para Frontend",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2110,
+        520
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook - Chat Cliente": {
+      "main": [
+        [
+          {
+            "node": "01 - Normalizar Entrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "01 - Normalizar Entrada": {
+      "main": [
+        [
+          {
+            "node": "02 - Contexto do Projeto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "02 - Contexto do Projeto": {
+      "main": [
+        [
+          {
+            "node": "03 - Preparar Prompt da IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "03 - Preparar Prompt da IA": {
+      "main": [
+        [
+          {
+            "node": "04 - Chamar IA por API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "04 - Chamar IA por API": {
+      "main": [
+        [
+          {
+            "node": "05 - Motor Conversacional Cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "05 - Motor Conversacional Cliente": {
+      "main": [
+        [
+          {
+            "node": "06 - Auditoria da Resposta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "06 - Auditoria da Resposta": {
+      "main": [
+        [
+          {
+            "node": "Responder - Cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "JB Motos"
+    },
+    {
+      "name": "Cliente"
+    }
+  ],
+  "triggerCount": 0,
+  "updatedAt": "2026-05-21T00:00:00.000Z",
+  "versionId": "cliente-v1"
+}
