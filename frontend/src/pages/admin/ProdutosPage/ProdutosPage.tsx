@@ -152,25 +152,29 @@ export function ProdutosPage() {
     if (!file) return;
 
     setArquivoImportacao(file.name);
-    setProgressoImportacao(25);
+    setProgressoImportacao(15);
     setResultadoImportacao("Lendo planilha e identificando produtos/fornecedores...");
 
     try {
+      setProgressoImportacao(50);
       const result = await importCatalogSpreadsheet(file, {
         produtosAtuais: produtos,
         fornecedoresAtuais: fornecedores,
       });
 
+      setProgressoImportacao(85);
       setProdutos(result.produtos);
       setFornecedores(result.fornecedores);
       setProgressoImportacao(100);
       setResultadoImportacao(
         `Importação concluída: ${result.produtosCriados} produto(s), ${result.fornecedoresCriados} fornecedor(es). Linhas ignoradas: ${result.linhasIgnoradas}.`,
       );
-    } catch {
+    } catch (error) {
       setProgressoImportacao(0);
       setResultadoImportacao(
-        "Não foi possível importar a planilha. Verifique se o arquivo está em CSV, XLS ou XLSX e se possui cabeçalhos.",
+        error instanceof Error
+          ? error.message
+          : "Não foi possível importar a planilha. Verifique se o arquivo está em CSV, XLS ou XLSX e se possui cabeçalhos.",
       );
     }
   };

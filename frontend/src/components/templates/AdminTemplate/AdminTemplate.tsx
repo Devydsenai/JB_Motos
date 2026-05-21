@@ -3,6 +3,7 @@ import { AdminAuthGuard } from "@/components/auth/AdminAuthGuard";
 import styled from "styled-components";
 import { AdminSidebar } from "@components/organisms/AdminSidebar";
 import { AdminHeader } from "@components/organisms/AdminHeader";
+import { AdminAssistantWidget } from "@/pages/admin/AdminAssistantWidget";
 import { SidebarProvider } from "@/contexts/SidebarContext";
 import { SessaoProvider } from "@/contexts/SessaoContext";
 import { AtendimentoProvider } from "@/contexts/AtendimentoContext";
@@ -46,6 +47,7 @@ export function AdminTemplate() {
               </AdminAuthGuard>
             </Content>
           </Main>
+          <AdminAssistantWidget />
         </Layout>
         </AtendimentoProvider>
         </FuncionariosProvider>
