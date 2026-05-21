@@ -18,7 +18,19 @@ export const webhookSchema = z.object({
 
 export const createPreferenceSchema = z.object({
   body: z.object({
-    orderId: z.string().uuid(),
+    orderId: z.string().uuid().optional(),
+    externalReference: z.string().optional(),
+    items: z
+      .array(
+        z.object({
+          id: z.string().optional(),
+          title: z.string().min(1),
+          quantity: z.coerce.number().int().positive(),
+          unit_price: z.coerce.number().positive(),
+        }),
+      )
+      .min(1)
+      .optional(),
     payer: z
       .object({
         name: z.string().optional(),

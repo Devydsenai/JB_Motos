@@ -178,6 +178,27 @@ export const PaymentBody = styled.div`
   }
 `;
 
+export const MercadoPagoOnly = styled.div`
+  padding: 1.2rem;
+  display: grid;
+  gap: 0.65rem;
+  background: ${({ theme }) => (theme.mode === "light" ? "#fff" : "#151515")};
+
+  strong {
+    color: #c41e1e;
+    font-size: 1rem;
+  }
+
+  p {
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  span {
+    font-weight: 850;
+  }
+`;
+
 export const PixBox = styled.div`
   display: grid;
   grid-template-columns: 150px 1fr;
@@ -230,6 +251,11 @@ export const PayNow = styled.button`
   color: #fff;
   font-weight: 850;
   cursor: pointer;
+
+  &:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
 `;
 
 export const Summary = styled.aside`

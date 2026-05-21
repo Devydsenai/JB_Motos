@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@components/atoms/Icon";
 import { ThemeToggle } from "@components/molecules/ThemeToggle";
+import { StoreAccountLink } from "../StoreAccountLink";
 import logo from "@components/atoms/assets/Logo.JBmotos.svg";
 import type { CartItem } from "../lojaTypes";
 import { StoreFooter } from "../StoreFooter";
@@ -27,6 +28,7 @@ import {
   CartTable,
   NoteBox,
   Page,
+  PurchaseHistory,
   ProductMeta,
   QuantityBox,
   RedBtn,
@@ -35,11 +37,30 @@ import {
 } from "./CarrinhoPage.styles";
 
 const STORAGE_CART = "jb-motos-store-cart";
+const STORAGE_PURCHASE_HISTORY = "jb-motos-store-purchase-history";
+
+type PurchaseHistoryItem = {
+  id: string;
+  status: string;
+  createdAt: string;
+  total: number;
+  items: CartItem[];
+};
 
 function readCart(): CartItem[] {
   try {
     const raw = localStorage.getItem(STORAGE_CART);
     const parsed = raw ? (JSON.parse(raw) as CartItem[]) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function readPurchaseHistory(): PurchaseHistoryItem[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_PURCHASE_HISTORY);
+    const parsed = raw ? (JSON.parse(raw) as PurchaseHistoryItem[]) : [];
     return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
@@ -60,6 +81,7 @@ function formatPrice(value: number) {
 
 export function CarrinhoPage() {
   const [items, setItems] = useState<CartItem[]>(readCart);
+  const [history] = useState<PurchaseHistoryItem[]>(readPurchaseHistory);
   const [toast, setToast] = useState("");
   const totalItens = items.reduce((total, item) => total + item.quantity, 0);
   const totalPrice = items.reduce(
@@ -97,10 +119,7 @@ export function CarrinhoPage() {
               <Icon name="house-fill" size={12} color="#fff" />
               Voltar para loja
             </Link>
-            <Link to="/loja/minha-conta">
-              <Icon name="person-fill" size={12} color="#fff" />
-              Minha conta
-            </Link>
+            <StoreAccountLink />
             <Link to="/loja/favoritos">
               <Icon name="heart-fill" size={12} color="#fff" />
               Favoritos
@@ -210,6 +229,31 @@ export function CarrinhoPage() {
               <Link to="/loja/checkout">Finalizar compra</Link>
             </CartFooter>
           </>
+        )}
+
+        {history.length > 0 && (
+          <PurchaseHistory>
+            <h2>Histórico de compras</h2>
+            {history.slice(0, 5).map((purchase) => (
+              <article key={purchase.id}>
+                <div>
+                  <strong>{purchase.id}</strong>
+                  <span>
+                    {new Date(purchase.createdAt).toLocaleString("pt-BR")} ·{" "}
+                    {purchase.status === "aguardando_pagamento"
+                      ? "Aguardando pagamento"
+                      : purchase.status}
+                  </span>
+                </div>
+                <p>
+                  {purchase.items
+                    .map((item) => `${item.quantity}x ${item.name}`)
+                    .join(", ")}
+                </p>
+                <strong>{formatPrice(purchase.total)}</strong>
+              </article>
+            ))}
+          </PurchaseHistory>
         )}
       </Page>
 

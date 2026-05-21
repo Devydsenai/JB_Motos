@@ -8,6 +8,7 @@ import type { PerfilSistema } from "@/config/permissoes";
 import { loginUnificado } from "@/services/auth";
 import { saveAdminAuth } from "@/services/authStorage";
 import { ContaCliente } from "../ContaCliente";
+import { StoreAccountLink } from "../StoreAccountLink";
 import { StoreFooter } from "../StoreFooter";
 import { StoreMegaMenu } from "../StoreMegaMenu";
 import { StoreOffersMenu } from "../StoreOffersMenu";
@@ -98,10 +99,7 @@ export function MinhaContaPage() {
               <Icon name="house-fill" size={12} color="#fff" />
               Voltar para loja
             </Link>
-            <Link to="/loja/minha-conta">
-              <Icon name="person-fill" size={12} color="#fff" />
-              Minha conta
-            </Link>
+            <StoreAccountLink />
             <TopThemeWrap>
               <ThemeToggle />
             </TopThemeWrap>

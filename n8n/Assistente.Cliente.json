@@ -52,6 +52,32 @@
     },
     {
       "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "Chat Id",
+              "type": "string",
+              "value": "={{ $json.body.sessionId || $json.body.clienteId || 'cliente-anonimo' }}"
+            },
+            {
+              "name": "Message",
+              "type": "string",
+              "value": "={{ $json.body.message || $json.body.text || $json.body.pergunta || '' }}"
+            }
+          ]
+        }
+      },
+      "id": "b89fc5c8-0ab4-4d3b-80fa-7f3e9ccf0010",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "parameters": {
         "content": "## Entrada do chat\nEste webhook recebe mensagens do chat da loja.\n\nDepois vamos conectar:\n- autenticação por sessão\n- histórico do cliente\n- carrinho atual\n- origem da página",
         "height": 220,
         "width": 300,
@@ -68,14 +94,14 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = $json.body ?? $json;\nconst messageRaw = String(body.message ?? body.text ?? body.pergunta ?? '').trim();\nreturn [{\n  ...$json,\n  body,\n  sessionId: body.sessionId ?? body.clienteId ?? 'cliente-anonimo',\n  messageRaw,\n  message: messageRaw.toLowerCase(),\n  page: body.page ?? '/loja',\n  cart: Array.isArray(body.cart) ? body.cart : [],\n  receivedAt: new Date().toISOString()\n}];"
+        "jsCode": "const body = $json.body ?? $json;\nconst messageRaw = String($json.Message ?? body.message ?? body.text ?? body.pergunta ?? '').trim();\nconst sessionId = String($json['Chat Id'] ?? body.sessionId ?? body.clienteId ?? 'cliente-anonimo');\nreturn [{\n  ...$json,\n  body,\n  sessionId,\n  messageRaw,\n  message: messageRaw.toLowerCase(),\n  page: body.page ?? '/loja',\n  cart: Array.isArray(body.cart) ? body.cart : [],\n  receivedAt: new Date().toISOString()\n}];"
       },
       "id": "b89fc5c8-0ab4-4d3b-80fa-7f3e9ccf0004",
       "name": "01 - Normalizar Entrada",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        500,
+        760,
         300
       ]
     },
@@ -104,7 +130,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        760,
+        1020,
         300
       ]
     },
@@ -126,20 +152,24 @@
     },
     {
       "parameters": {
-        "jsCode": "const catalogoResumo = {\n  ofertas: ['Oleo Motor 10W30', 'Capacete Pro Tork', 'Pastilha de Freio'],\n  cartazes: ['Revisao preventiva', 'Promocoes da semana'],\n  servicos: ['Troca de oleo', 'Troca de pastilha de freio', 'Troca de relacao', 'Troca de pneu']\n};\n\nconst systemPrompt = `Voce e a IA de atendimento da JB Motos. Classifique a mensagem do cliente e devolva somente JSON valido.\n\nObjetivo: dividir a conversa entre ofertas, cartazes, servicos, pagamento, carrinho e fallback.\n\nRegras:\n- Nao prometa pagamento real. Mercado Pago ainda e simulacao.\n- Para servicos, identifique servico desejado e se o cliente confirmou adicionar ao carrinho.\n- Para carrinho, retorne action sugerida de navegacao ou add_to_cart quando fizer sentido.\n- Responda sempre em portugues do Brasil.\n\nFormato obrigatorio:\n{\n  \"intent\": \"boas_vindas|ofertas_cartazes|lista_servicos|confirmar_servico|servico_confirmado|pagamento|carrinho|fallback\",\n  \"confidence\": 0.0,\n  \"replySuggestion\": \"texto curto\",\n  \"entities\": {\n    \"servico\": null,\n    \"produto\": null,\n    \"confirmou\": false\n  },\n  \"nextStep\": \"acao recomendada\"\n}`;\n\nreturn [{\n  ...$json,\n  aiRequest: {\n    model: process.env.JB_MOTOS_IA_MODEL || 'gpt-4o-mini',\n    temperature: 0.2,\n    response_format: { type: 'json_object' },\n    messages: [\n      { role: 'system', content: systemPrompt },\n      { role: 'user', content: JSON.stringify({ mensagem: $json.messageRaw, pagina: $json.page, carrinho: $json.cart, catalogo: catalogoResumo }) }\n    ]\n  }\n}];"
+        "promptType": "define",
+        "text": "={{ $json.messageRaw || $json.Message || $json.body?.message || $json.body?.text || 'Olá, preciso de atendimento na JB Motos' }}",
+        "options": {
+          "systemMessage": "Voce e o AI Agent do atendimento ao cliente da JB Motos. Classifique a mensagem e responda somente JSON valido. Catalogo de referencia: ofertas Oleo Motor 10W30, Capacete Pro Tork, Pastilha de Freio; cartazes Revisao preventiva e Promocoes da semana; servicos de oficina incluem troca de oleo, revisao completa, diagnostico eletrico, limpeza de bico, regulagem de valvulas, troca de bateria, freios, pastilha de freio, suspensao, embreagem, carburador, transmissao, relacao, corrente e pneus. Regras: nao prometer pagamento real porque Mercado Pago ainda e simulacao; explicar servicos quando solicitado; para enviar solicitacao ao administrativo o cliente precisa estar logado; confirmar antes de adicionar ou solicitar servico; identificar ofertas, cartazes, servicos, pagamento ou carrinho. Formato obrigatorio: {\"intent\":\"boas_vindas|ofertas_cartazes|lista_servicos|confirmar_servico|servico_confirmado|pagamento|carrinho|fallback\",\"confidence\":0.0,\"replySuggestion\":\"texto curto\",\"entities\":{\"servico\":null,\"produto\":null,\"confirmou\":false},\"nextStep\":\"acao recomendada\"}"
+        }
       },
       "id": "b89fc5c8-0ab4-4d3b-80fa-7f3e9ccf0007",
-      "name": "03 - Preparar Prompt da IA",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
+      "name": "03 - AI Agent LangChain Cliente",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
       "position": [
-        1040,
+        1300,
         300
       ]
     },
     {
       "parameters": {
-        "content": "## Camada de IA\nEste ponto prepara a mensagem para a IA dividir o atendimento.\n\nVariaveis no n8n:\n- JB_MOTOS_IA_API_URL\n- JB_MOTOS_IA_API_KEY\n- JB_MOTOS_IA_MODEL\n\nA IA classifica a intencao, mas o motor local continua como seguranca.",
+        "content": "## Camada LangChain\nEste fluxo usa o AI Agent nativo do n8n.\n\nLigacoes semanticas:\n- OpenAI Chat Model -> ai_languageModel\n- Simple Memory -> ai_memory\n\nO motor local continua depois do Agent para converter a resposta da IA em actions do frontend.",
         "height": 280,
         "width": 350,
         "color": 6
@@ -155,20 +185,38 @@
     },
     {
       "parameters": {
-        "jsCode": "const apiUrl = process.env.JB_MOTOS_IA_API_URL;\nconst apiKey = process.env.JB_MOTOS_IA_API_KEY;\n\nif (!apiUrl || !apiKey) {\n  return [{\n    ...$json,\n    ai: {\n      enabled: false,\n      status: 'missing_config',\n      message: 'Configure JB_MOTOS_IA_API_URL e JB_MOTOS_IA_API_KEY no ambiente do n8n.'\n    }\n  }];\n}\n\ntry {\n  const response = await this.helpers.httpRequest({\n    method: 'POST',\n    url: apiUrl,\n    headers: {\n      Authorization: `Bearer ${apiKey}`,\n      'Content-Type': 'application/json'\n    },\n    body: $json.aiRequest,\n    json: true,\n    timeout: 30000\n  });\n\n  const content = response?.choices?.[0]?.message?.content ?? response?.output_text ?? response?.reply ?? response;\n  const decision = typeof content === 'string' ? JSON.parse(content) : content;\n\n  return [{\n    ...$json,\n    ai: {\n      enabled: true,\n      status: 'ok',\n      provider: 'external_api',\n      decision\n    }\n  }];\n} catch (error) {\n  return [{\n    ...$json,\n    ai: {\n      enabled: true,\n      status: 'error',\n      message: error.message\n    }\n  }];\n}"
+        "model": {
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        }
       },
       "id": "b89fc5c8-0ab4-4d3b-80fa-7f3e9ccf0008",
-      "name": "04 - Chamar IA por API",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
+      "name": "04 - OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
       "position": [
-        1320,
-        300
+        1300,
+        80
       ]
     },
     {
       "parameters": {
-        "content": "## API da IA\nEste node chama a API real da IA usando variaveis de ambiente.\n\nEle nao guarda chave dentro do JSON.\n\nSe a API falhar ou nao estiver configurada, o fluxo segue pelo motor local para nao parar o atendimento.",
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Edit Fields').first().json['Chat Id'] || $json['Chat Id'] || $json.sessionId || 'cliente-anonimo' }}",
+        "contextWindowLength": 50
+      },
+      "id": "b89fc5c8-0ab4-4d3b-80fa-7f3e9ccf0011",
+      "name": "04.1 - Simple Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        1300,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Modelo e memoria\nConfigure as credenciais da OpenAI no node `OpenAI Chat Model`.\n\nA memoria usa `Chat Id`, mantendo contexto por conversa sem misturar clientes.",
         "height": 260,
         "width": 350,
         "color": 7
@@ -184,14 +232,14 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = $json.body ?? $json;\nconst messageRaw = String(body.message ?? body.text ?? body.pergunta ?? '').trim();\nconst message = messageRaw.toLowerCase();\nconst sessionId = body.sessionId ?? body.clienteId ?? 'cliente-anonimo';\nconst aiIntent = $json.ai?.decision?.intent ?? '';\nconst aiEntities = $json.ai?.decision?.entities ?? {};\n\nconst catalogo = {\n  ofertas: [\n    { id: 'oferta-oleo-10w30', nome: 'Óleo Motor 10W30', preco: 48.9, categoria: 'Lubrificantes' },\n    { id: 'oferta-capacete-pro-tork', nome: 'Capacete Pro Tork', preco: 249.9, categoria: 'Acessórios' },\n    { id: 'oferta-pastilha-freio', nome: 'Pastilha de Freio', preco: 35, categoria: 'Freios' }\n  ],\n  cartazes: [\n    { id: 'cartaz-revisao', titulo: 'Revisão preventiva', rota: '/loja#servicos' },\n    { id: 'cartaz-promocoes', titulo: 'Promoções da semana', rota: '/loja#ofertas' }\n  ],\n  servicos: [\n    { id: 'serv-troca-oleo', nome: 'Troca de óleo', preco: 35, pecaSugerida: 'Óleo Motor 10W30', pecaPreco: 48.9 },\n    { id: 'serv-pastilha-freio', nome: 'Troca de pastilha de freio', preco: 60, pecaSugerida: 'Pastilha de Freio', pecaPreco: 35 },\n    { id: 'serv-relacao', nome: 'Troca de relação', preco: 90, pecaSugerida: 'Kit Relação CG 160', pecaPreco: 142.5 },\n    { id: 'serv-pneu', nome: 'Troca de pneu', preco: 45, pecaSugerida: 'Pneu Traseiro 90/90', pecaPreco: 189.9 }\n  ]\n};\n\nfunction moeda(valor) {\n  return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });\n}\n\nfunction detectarServico() {\n  const termoIa = String(aiEntities.servico ?? '').toLowerCase();\n  return catalogo.servicos.find((servico) => {\n    const nome = servico.nome.toLowerCase();\n    return nome.includes(termoIa) || termoIa.includes(nome) || message.includes(nome) || nome.split(' ').some((parte) => parte.length > 3 && message.includes(parte));\n  });\n}\n\nfunction respostaBase(intent, reply, extra = {}) {\n  return {\n    ok: true,\n    assistant: 'cliente',\n    sessionId,\n    intent,\n    reply,\n    quickReplies: extra.quickReplies ?? ['Ver ofertas', 'Ver serviços', 'Formas de pagamento', 'Ir para carrinho'],\n    actions: extra.actions ?? [],\n    data: { ...(extra.data ?? {}), ia: $json.ai ?? null }\n  };\n}\n\nif (!message) {\n  return [respostaBase('boas_vindas', 'Olá! Sou o assistente da JB Motos. Posso te ajudar com ofertas, serviços, formas de pagamento ou levar itens para o carrinho.', {\n    quickReplies: ['Ofertas', 'Cartazes', 'Serviços', 'Formas de pagamento']\n  })];\n}\n\nif (aiIntent === 'pagamento' || message.includes('pagamento') || message.includes('pagar') || message.includes('pix') || message.includes('cartao') || message.includes('cartão')) {\n  return [respostaBase('pagamento', 'Hoje trabalhamos com simulação de pagamento para testes: PIX, cartão, dinheiro e pagamento no balcão. Quando o Mercado Pago for conectado, essa etapa vai abrir o checkout real.', {\n    actions: [{ type: 'navigate', payload: { route: '/loja/minha-conta' } }]\n  })];\n}\n\nif (aiIntent === 'ofertas_cartazes' || message.includes('oferta') || message.includes('promo') || message.includes('cartaz')) {\n  return [respostaBase('ofertas_cartazes', 'Encontrei ofertas e cartazes ativos. Vou te direcionar para a área correta da loja.', {\n    data: { ofertas: catalogo.ofertas, cartazes: catalogo.cartazes },\n    actions: [{ type: 'navigate', payload: { route: '/loja#ofertas' } }],\n    quickReplies: catalogo.ofertas.map((item) => item.nome)\n  })];\n}\n\nif (['lista_servicos', 'confirmar_servico', 'servico_confirmado'].includes(aiIntent) || message.includes('serviço') || message.includes('servico') || message.includes('revisao') || message.includes('revisão') || detectarServico()) {\n  const servico = detectarServico();\n  if (!servico) {\n    return [respostaBase('lista_servicos', 'Temos estes serviços disponíveis. Escolha um para eu te mostrar peça sugerida e valor.', {\n      data: { servicos: catalogo.servicos },\n      quickReplies: catalogo.servicos.map((item) => item.nome)\n    })];\n  }\n\n  const confirmou = Boolean(aiEntities.confirmou) || ['confirmo', 'quero', 'adicionar', 'pode colocar', 'fechar'].some((termo) => message.includes(termo));\n  const itemCarrinho = {\n    id: servico.id,\n    nome: servico.nome,\n    tipo: 'servico',\n    precoServico: servico.preco,\n    peca: servico.pecaSugerida,\n    precoPeca: servico.pecaPreco,\n    total: servico.preco + servico.pecaPreco\n  };\n\n  if (confirmou) {\n    return [respostaBase('servico_confirmado', `Perfeito. Adicionei ${servico.nome} ao carrinho. Serviço: ${moeda(servico.preco)} + peça sugerida (${servico.pecaSugerida}): ${moeda(servico.pecaPreco)}. Total: ${moeda(itemCarrinho.total)}.`, {\n      data: { itemCarrinho },\n      actions: [\n        { type: 'add_to_cart', payload: itemCarrinho },\n        { type: 'cart_animation', payload: { increment: 1, target: 'cart-icon' } }\n      ],\n      quickReplies: ['Ir para carrinho', 'Ver mais serviços', 'Continuar comprando']\n    })];\n  }\n\n  return [respostaBase('confirmar_servico', `Você escolheu ${servico.nome}. Para esse serviço, sugerimos a peça ${servico.pecaSugerida}. Serviço: ${moeda(servico.preco)} + peça: ${moeda(servico.pecaPreco)}. Deseja adicionar ao carrinho?`, {\n    data: { itemCarrinho },\n    quickReplies: [`Confirmo ${servico.nome}`, 'Ver outros serviços', 'Cancelar']\n  })];\n}\n\nif (aiIntent === 'carrinho' || message.includes('carrinho') || message.includes('finalizar') || message.includes('checkout')) {\n  return [respostaBase('carrinho', 'Certo. Vou abrir o carrinho para você revisar os itens e finalizar a compra.', {\n    actions: [{ type: 'navigate', payload: { route: '/loja/carrinho' } }]\n  })];\n}\n\nreturn [respostaBase('fallback', $json.ai?.decision?.replySuggestion || 'Posso te ajudar com ofertas, cartazes, serviços, formas de pagamento ou carrinho. O que você deseja fazer agora?', {\n  quickReplies: ['Ver ofertas', 'Ver serviços', 'Formas de pagamento', 'Carrinho']\n})];"
+        "jsCode": "const editFields = $('Edit Fields').first().json ?? {};\nconst body = $json.body ?? editFields.body ?? $json;\nconst messageRaw = String($json.Message ?? editFields.Message ?? body.message ?? body.text ?? body.pergunta ?? '').trim();\nconst message = messageRaw.toLowerCase();\nconst sessionId = String($json['Chat Id'] ?? editFields['Chat Id'] ?? body.sessionId ?? body.clienteId ?? 'cliente-anonimo');\nconst langchainOutput = String($json.output ?? '').trim();\nlet langchainDecision = {};\ntry {\n  langchainDecision = langchainOutput ? JSON.parse(langchainOutput) : {};\n} catch (error) {\n  langchainDecision = { replySuggestion: langchainOutput };\n}\nconst aiIntent = langchainDecision.intent ?? $json.ai?.decision?.intent ?? '';\nconst aiEntities = langchainDecision.entities ?? $json.ai?.decision?.entities ?? {};\n\nconst catalogo = {\n  ofertas: [\n    { id: 'oferta-oleo-10w30', nome: 'Óleo Motor 10W30', preco: 48.9, categoria: 'Lubrificantes' },\n    { id: 'oferta-capacete-pro-tork', nome: 'Capacete Pro Tork', preco: 249.9, categoria: 'Acessórios' },\n    { id: 'oferta-pastilha-freio', nome: 'Pastilha de Freio', preco: 35, categoria: 'Freios' }\n  ],\n  cartazes: [\n    { id: 'cartaz-revisao', titulo: 'Revisão preventiva', rota: '/loja#servicos' },\n    { id: 'cartaz-promocoes', titulo: 'Promoções da semana', rota: '/loja#ofertas' }\n  ],\n  servicos: [\n    { id: 'serv-troca-oleo', nome: 'Troca de óleo', preco: 35, pecaSugerida: 'Óleo Motor 10W30', pecaPreco: 48.9 },\n    { id: 'serv-pastilha-freio', nome: 'Troca de pastilha de freio', preco: 60, pecaSugerida: 'Pastilha de Freio', pecaPreco: 35 },\n    { id: 'serv-relacao', nome: 'Troca de relação', preco: 90, pecaSugerida: 'Kit Relação CG 160', pecaPreco: 142.5 },\n    { id: 'serv-pneu', nome: 'Troca de pneu', preco: 45, pecaSugerida: 'Pneu Traseiro 90/90', pecaPreco: 189.9 }\n  ]\n};\n\nfunction moeda(valor) {\n  return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });\n}\n\nfunction detectarServico() {\n  const termoIa = String(aiEntities.servico ?? '').toLowerCase();\n  return catalogo.servicos.find((servico) => {\n    const nome = servico.nome.toLowerCase();\n    return nome.includes(termoIa) || termoIa.includes(nome) || message.includes(nome) || nome.split(' ').some((parte) => parte.length > 3 && message.includes(parte));\n  });\n}\n\nfunction respostaBase(intent, reply, extra = {}) {\n  return {\n    ok: true,\n    assistant: 'cliente',\n    sessionId,\n    intent,\n    reply,\n    quickReplies: extra.quickReplies ?? ['Ver ofertas', 'Ver serviços', 'Formas de pagamento', 'Ir para carrinho'],\n    actions: extra.actions ?? [],\n    data: { ...(extra.data ?? {}), ia: { provider: 'n8n_langchain', output: langchainOutput, decision: langchainDecision } }\n  };\n}\n\nif (!message) {\n  return [respostaBase('boas_vindas', 'Olá! Sou o assistente da JB Motos. Posso te ajudar com ofertas, serviços, formas de pagamento ou levar itens para o carrinho.', {\n    quickReplies: ['Ofertas', 'Cartazes', 'Serviços', 'Formas de pagamento']\n  })];\n}\n\nif (aiIntent === 'pagamento' || message.includes('pagamento') || message.includes('pagar') || message.includes('pix') || message.includes('cartao') || message.includes('cartão')) {\n  return [respostaBase('pagamento', 'Hoje trabalhamos com simulação de pagamento para testes: PIX, cartão, dinheiro e pagamento no balcão. Quando o Mercado Pago for conectado, essa etapa vai abrir o checkout real.', {\n    actions: [{ type: 'navigate', payload: { route: '/loja/minha-conta' } }]\n  })];\n}\n\nif (aiIntent === 'ofertas_cartazes' || message.includes('oferta') || message.includes('promo') || message.includes('cartaz')) {\n  return [respostaBase('ofertas_cartazes', 'Encontrei ofertas e cartazes ativos. Vou te direcionar para a área correta da loja.', {\n    data: { ofertas: catalogo.ofertas, cartazes: catalogo.cartazes },\n    actions: [{ type: 'navigate', payload: { route: '/loja#ofertas' } }],\n    quickReplies: catalogo.ofertas.map((item) => item.nome)\n  })];\n}\n\nif (['lista_servicos', 'confirmar_servico', 'servico_confirmado'].includes(aiIntent) || message.includes('serviço') || message.includes('servico') || message.includes('revisao') || message.includes('revisão') || detectarServico()) {\n  const servico = detectarServico();\n  if (!servico) {\n    return [respostaBase('lista_servicos', 'Temos estes serviços disponíveis. Escolha um para eu te mostrar peça sugerida e valor.', {\n      data: { servicos: catalogo.servicos },\n      quickReplies: catalogo.servicos.map((item) => item.nome)\n    })];\n  }\n\n  const confirmou = Boolean(aiEntities.confirmou) || ['confirmo', 'quero', 'adicionar', 'pode colocar', 'fechar'].some((termo) => message.includes(termo));\n  const itemCarrinho = {\n    id: servico.id,\n    nome: servico.nome,\n    tipo: 'servico',\n    precoServico: servico.preco,\n    peca: servico.pecaSugerida,\n    precoPeca: servico.pecaPreco,\n    total: servico.preco + servico.pecaPreco\n  };\n\n  if (confirmou) {\n    return [respostaBase('servico_confirmado', `Perfeito. Adicionei ${servico.nome} ao carrinho. Serviço: ${moeda(servico.preco)} + peça sugerida (${servico.pecaSugerida}): ${moeda(servico.pecaPreco)}. Total: ${moeda(itemCarrinho.total)}.`, {\n      data: { itemCarrinho },\n      actions: [\n        { type: 'add_to_cart', payload: itemCarrinho },\n        { type: 'cart_animation', payload: { increment: 1, target: 'cart-icon' } },\n        {\n          type: 'create_service_request',\n          payload: {\n            clienteNome: 'Cliente da loja',\n            clienteId: sessionId,\n            servicoNaMoto: servico.nome,\n            descricao: `Solicitação criada pelo assistente: ${servico.nome}. Peça sugerida: ${servico.pecaSugerida}.`,\n            valorServico: moeda(servico.preco),\n            observacao: `Peça sugerida: ${servico.pecaSugerida} (${moeda(servico.pecaPreco)})`,\n            tipo: 'servico',\n            status: 'pendente',\n            origem: 'loja_online'\n          }\n        }\n      ],\n      quickReplies: ['Ir para carrinho', 'Ver mais serviços', 'Continuar comprando']\n    })];\n  }\n\n  return [respostaBase('confirmar_servico', `Você escolheu ${servico.nome}. Para esse serviço, sugerimos a peça ${servico.pecaSugerida}. Serviço: ${moeda(servico.preco)} + peça: ${moeda(servico.pecaPreco)}. Deseja adicionar ao carrinho?`, {\n    data: { itemCarrinho },\n    quickReplies: [`Confirmo ${servico.nome}`, 'Ver outros serviços', 'Cancelar']\n  })];\n}\n\nif (aiIntent === 'carrinho' || message.includes('carrinho') || message.includes('finalizar') || message.includes('checkout')) {\n  return [respostaBase('carrinho', 'Certo. Vou abrir o carrinho para você revisar os itens e finalizar a compra.', {\n    actions: [{ type: 'navigate', payload: { route: '/loja/carrinho' } }]\n  })];\n}\n\nreturn [respostaBase('fallback', langchainDecision.replySuggestion || langchainDecision.replySuggestion || $json.ai?.decision?.replySuggestion || 'Posso te ajudar com ofertas, cartazes, serviços, formas de pagamento ou carrinho. O que você deseja fazer agora?', {\n  quickReplies: ['Ver ofertas', 'Ver serviços', 'Formas de pagamento', 'Carrinho']\n})];"
       },
       "id": "b89fc5c8-0ab4-4d3b-80fa-7f3e9ccf0002",
       "name": "05 - Motor Conversacional Cliente",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1600,
+        1580,
         300
       ]
     },
@@ -220,7 +268,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1880,
+        1860,
         300
       ]
     },
@@ -277,6 +325,17 @@
       "main": [
         [
           {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
             "node": "01 - Normalizar Entrada",
             "type": "main",
             "index": 0
@@ -299,30 +358,41 @@
       "main": [
         [
           {
-            "node": "03 - Preparar Prompt da IA",
+            "node": "03 - AI Agent LangChain Cliente",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "03 - Preparar Prompt da IA": {
-      "main": [
-        [
-          {
-            "node": "04 - Chamar IA por API",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "04 - Chamar IA por API": {
+    "03 - AI Agent LangChain Cliente": {
       "main": [
         [
           {
             "node": "05 - Motor Conversacional Cliente",
             "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "04 - OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "03 - AI Agent LangChain Cliente",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "04.1 - Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "03 - AI Agent LangChain Cliente",
+            "type": "ai_memory",
             "index": 0
           }
         ]
@@ -365,6 +435,6 @@
     }
   ],
   "triggerCount": 0,
-  "updatedAt": "2026-05-21T00:00:00.000Z",
-  "versionId": "cliente-v1"
+  "updatedAt": "2026-05-21T20:47:43.292Z",
+  "versionId": "cliente-langchain-v5-fix-service-detection"
 }

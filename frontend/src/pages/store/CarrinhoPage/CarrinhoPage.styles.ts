@@ -200,3 +200,48 @@ export const CartFooter = styled.footer`
     background: #221817;
   }
 `;
+
+export const PurchaseHistory = styled.section`
+  margin-top: 2rem;
+  border-top: 1px solid
+    ${({ theme }) =>
+      theme.mode === "light" ? "rgba(0, 0, 0, 0.1)" : "rgba(255, 255, 255, 0.12)"};
+  padding-top: 1.25rem;
+  display: grid;
+  gap: 0.75rem;
+
+  h2 {
+    margin: 0 0 0.5rem;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+
+  article {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.75rem;
+    padding: 0.9rem;
+    background: ${({ theme }) => (theme.mode === "light" ? "#fafafa" : "#111")};
+    border: 1px solid
+      ${({ theme }) =>
+        theme.mode === "light" ? "rgba(0, 0, 0, 0.08)" : "rgba(255, 255, 255, 0.12)"};
+  }
+
+  div {
+    display: grid;
+    gap: 0.2rem;
+    min-width: 0;
+  }
+
+  span,
+  p {
+    color: ${({ theme }) => (theme.mode === "light" ? "#555" : "#cfcfcf")};
+    font-size: 0.8rem;
+  }
+
+  p {
+    grid-column: 1 / -1;
+    margin: 0;
+  }
+`;

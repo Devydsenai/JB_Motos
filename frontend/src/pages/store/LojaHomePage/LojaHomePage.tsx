@@ -20,6 +20,7 @@ import glasses1 from "@components/atoms/assets/mototab/glasses-3pair-1.png";
 import glasses2 from "@components/atoms/assets/mototab/glasses-3pair-2.png";
 import type { CartItem, LojaProduct } from "../lojaTypes";
 import { StoreCartAddedModal } from "../StoreCartAddedModal";
+import { StoreAccountLink } from "../StoreAccountLink";
 import { StoreFooter } from "../StoreFooter";
 import { StoreMegaMenu } from "../StoreMegaMenu";
 import { StoreOffersMenu } from "../StoreOffersMenu";
@@ -268,10 +269,7 @@ export function LojaHomePage() {
                 </SearchCloseBtn>
               )}
             </TopSearchForm>
-            <Link to="/loja/minha-conta">
-              <Icon name="person-fill" size={12} color="#fff" />
-              Minha conta
-            </Link>
+            <StoreAccountLink />
             <Link to="/loja/favoritos">
               <Icon name="heart-fill" size={12} color="#fff" />
               Favoritos ({wishlistCount})

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@components/atoms/Icon";
 import { ThemeToggle } from "@components/molecules/ThemeToggle";
+import { StoreAccountLink } from "../StoreAccountLink";
 import logo from "@components/atoms/assets/Logo.JBmotos.svg";
 import gallery2 from "@components/atoms/assets/mototab/gallery-2.jpg";
 import glasses from "@components/atoms/assets/mototab/glasses-3pair-1.png";
@@ -119,10 +120,7 @@ export function CatalogoPage() {
               <Icon name="house-fill" size={12} color="#fff" />
               Voltar para loja
             </Link>
-            <Link to="/loja/minha-conta">
-              <Icon name="person-fill" size={12} color="#fff" />
-              Minha conta
-            </Link>
+            <StoreAccountLink />
             <Link to="/loja/favoritos">
               <Icon name="heart-fill" size={12} color="#fff" />
               Favoritos

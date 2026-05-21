@@ -13,6 +13,7 @@ import jacket2 from "@components/atoms/assets/mototab/jacket-atomic-2.png";
 import goggles1 from "@components/atoms/assets/mototab/goggles-buzzard-1.png";
 import goggles2 from "@components/atoms/assets/mototab/goggles-buzzard-2.png";
 import type { CartItem, LojaProduct } from "../lojaTypes";
+import { StoreAccountLink } from "../StoreAccountLink";
 import { StoreCartAddedModal } from "../StoreCartAddedModal";
 import { StoreFooter } from "../StoreFooter";
 import { StoreMegaMenu } from "../StoreMegaMenu";
@@ -212,10 +213,7 @@ export function ServicosLojaPage() {
               <Icon name="house-fill" size={12} color="#fff" />
               Voltar para loja
             </Link>
-            <Link to="/loja/minha-conta">
-              <Icon name="person-fill" size={12} color="#fff" />
-              Minha conta
-            </Link>
+            <StoreAccountLink />
             <Link to="/loja/favoritos">
               <Icon name="heart-fill" size={12} color="#fff" />
               Favoritos

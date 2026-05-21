@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@components/atoms/Icon";
 import { ThemeToggle } from "@components/molecules/ThemeToggle";
+import { StoreAccountLink } from "../StoreAccountLink";
 import logo from "@components/atoms/assets/Logo.JBmotos.svg";
 import type { LojaProduct } from "../lojaTypes";
 import { StoreFooter } from "../StoreFooter";
@@ -79,10 +80,7 @@ export function FavoritosPage() {
               <Icon name="house-fill" size={12} color="#fff" />
               Voltar para loja
             </Link>
-            <Link to="/loja/minha-conta">
-              <Icon name="person-fill" size={12} color="#fff" />
-              Minha conta
-            </Link>
+            <StoreAccountLink />
             <Link to="/loja/favoritos">
               <Icon name="heart-fill" size={12} color="#fff" />
               Favoritos ({favoritos.length})

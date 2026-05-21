@@ -1,5 +1,7 @@
 import { Outlet } from "react-router-dom";
 import styled from "styled-components";
+import { AtendimentoProvider } from "@/contexts/AtendimentoContext";
+import { AssistenteClienteWidget } from "@/pages/store/AssistenteClienteWidget";
 
 const Layout = styled.div`
   min-height: 100vh;
@@ -9,7 +11,10 @@ const Layout = styled.div`
 export function StoreTemplate() {
   return (
     <Layout>
-      <Outlet />
+      <AtendimentoProvider>
+        <Outlet />
+        <AssistenteClienteWidget />
+      </AtendimentoProvider>
     </Layout>
   );
 }

@@ -6,11 +6,32 @@ import { AppError, NotFoundError } from "../../shared/errors/AppError.js";
 import { CreatePaymentDTO, CreatePreferenceDTO } from "./payments.schemas.js";
 
 export class PaymentsService {
+  private getMercadoPagoFrontendUrl() {
+    return getFrontendUrl().replace("localhost", "127.0.0.1");
+  }
+
+  private buildBackUrls() {
+    const frontend = this.getMercadoPagoFrontendUrl();
+    return {
+      success: `${frontend}/loja`,
+      failure: `${frontend}/loja/checkout/cancelado`,
+      pending: `${frontend}/loja/checkout/pendente`,
+    };
+  }
+
+  private canUseAutoReturn(backUrls: { success: string }) {
+    return backUrls.success.startsWith("https://");
+  }
+
   /**
    * Checkout Pro — cria preferência no Mercado Pago e retorna o link (init_point).
    * Fluxo igual à documentação: Preference.create({ body }).
    */
   async createCheckoutPreference(dto: CreatePreferenceDTO) {
+    if (!dto.orderId) {
+      return this.createDirectCheckoutPreference(dto);
+    }
+
     const order = await prisma.storeOrder.findUnique({
       where: { id: dto.orderId },
       include: {
@@ -21,7 +42,6 @@ export class PaymentsService {
     if (!order) throw new NotFoundError("Pedido");
     if (order.items.length === 0) throw new AppError("Pedido sem itens", 400);
 
-    const frontend = getFrontendUrl();
     const items = order.items.map((item) => ({
       id: item.productId,
       title: item.nomeSnapshot,
@@ -46,17 +66,17 @@ export class PaymentsService {
     const payerName =
       dto.payer?.name ?? order.entregaNome ?? order.storeCustomer?.nome ?? undefined;
 
+    const backUrls = this.buildBackUrls();
     const body: Record<string, unknown> = {
       items,
       external_reference: order.id,
       statement_descriptor: "JB MOTOS",
-      back_urls: {
-        success: `${frontend}/loja/checkout/sucesso`,
-        failure: `${frontend}/loja/checkout/cancelado`,
-        pending: `${frontend}/loja/checkout/pendente`,
-      },
-      auto_return: "approved",
+      back_urls: backUrls,
     };
+
+    if (this.canUseAutoReturn(backUrls)) {
+      body.auto_return = "approved";
+    }
 
     if (payerEmail || payerName) {
       body.payer = {
@@ -78,11 +98,7 @@ export class PaymentsService {
       throw new AppError("Preferência de pagamento expirada. Crie uma nova.", 410);
     }
 
-    // Credenciais de teste → sandbox_init_point | produção → init_point
-    const useSandbox = env.NODE_ENV !== "production" && Boolean(mp.sandbox_init_point);
-    const checkoutLink = useSandbox
-      ? mp.sandbox_init_point
-      : mp.init_point ?? mp.sandbox_init_point;
+    const checkoutLink = mp.init_point;
 
     if (!checkoutLink) {
       throw new AppError("Mercado Pago não retornou link de checkout", 502);
@@ -111,12 +127,72 @@ export class PaymentsService {
       /** URL para redirecionar o cliente (use window.location.href = link) */
       link: checkoutLink,
       id: mp.id,
-      init_point: mp.init_point,
-      sandbox_init_point: mp.sandbox_init_point,
+      init_point: checkoutLink,
       collector_id: mp.collector_id,
       external_reference: order.id,
       preference_expired: mp.preference_expired ?? false,
-      sandbox: useSandbox,
+    };
+  }
+
+  /**
+   * Checkout direto — usado pela loja enquanto o carrinho ainda esta local no frontend.
+   * Quando o carrinho/pedido estiver 100% no backend, use o fluxo por orderId acima.
+   */
+  private async createDirectCheckoutPreference(dto: CreatePreferenceDTO) {
+    if (!dto.items?.length) throw new AppError("Informe itens para o checkout", 400);
+
+    const externalReference = dto.externalReference ?? `checkout-${Date.now()}`;
+    const backUrls = this.buildBackUrls();
+    const body: Record<string, unknown> = {
+      items: dto.items.map((item) => ({
+        id: item.id ?? item.title,
+        title: item.title,
+        quantity: item.quantity,
+        currency_id: "BRL",
+        unit_price: item.unit_price,
+      })),
+      external_reference: externalReference,
+      statement_descriptor: "JB MOTOS",
+      back_urls: backUrls,
+    };
+
+    if (this.canUseAutoReturn(backUrls)) {
+      body.auto_return = "approved";
+    }
+
+    if (dto.payer?.email || dto.payer?.name || dto.payer?.surname) {
+      body.payer = {
+        ...(dto.payer.name && { name: dto.payer.name }),
+        ...(dto.payer.surname && { surname: dto.payer.surname }),
+        ...(dto.payer.email && { email: dto.payer.email }),
+      };
+    }
+
+    if (env.API_PUBLIC_URL) {
+      body.notification_url = `${env.API_PUBLIC_URL}/api/v1/store/payments/webhook/mercadopago`;
+    }
+
+    const preference = getPreferenceClient();
+    const response = await preference.create({ body: body as any });
+    const mp = response as typeof response & { preference_expired?: boolean };
+
+    if (mp.preference_expired) {
+      throw new AppError("Preferência de pagamento expirada. Crie uma nova.", 410);
+    }
+
+    const checkoutLink = mp.init_point;
+
+    if (!checkoutLink) {
+      throw new AppError("Mercado Pago não retornou link de checkout", 502);
+    }
+
+    return {
+      link: checkoutLink,
+      id: mp.id,
+      init_point: checkoutLink,
+      collector_id: mp.collector_id,
+      external_reference: externalReference,
+      preference_expired: mp.preference_expired ?? false,
     };
   }
 

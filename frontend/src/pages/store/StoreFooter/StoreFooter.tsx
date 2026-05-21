@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@components/atoms/Icon";
+import { readStoreAuth } from "@/services/authStorage";
 import {
   Footer,
   FooterColumn,
@@ -25,6 +26,7 @@ const categories = [
 
 export function StoreFooter({ onNewsletter }: StoreFooterProps) {
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const customerName = readStoreAuth()?.customer.nome?.trim();
 
   useEffect(() => {
     const updateVisibility = () => setShowScrollTop(window.scrollY > 280);
@@ -104,10 +106,10 @@ export function StoreFooter({ onNewsletter }: StoreFooterProps) {
         </FooterColumn>
 
         <FooterColumn>
-          <h3>Minha conta</h3>
+          <h3>{customerName || "Minha conta"}</h3>
           <ul>
             <li>
-              <Link to="/loja/minha-conta">Minha conta</Link>
+              <Link to="/loja/minha-conta">{customerName || "Minha conta"}</Link>
             </li>
             <li>
               <Link to="/loja/minha-conta">Conecte-se</Link>

@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@components/atoms/Icon";
+import { criarCheckoutMercadoPago } from "@/services/mercadoPagoCheckout";
+import { readStoreAuth } from "@/services/authStorage";
 import type { CartItem } from "../lojaTypes";
 import {
   CheckLine,
@@ -10,13 +12,10 @@ import {
   FormArea,
   Input,
   Layout,
+  MercadoPagoOnly,
   Page,
-  PaymentBody,
   PaymentBox,
-  PaymentHead,
   PayNow,
-  PixBox,
-  PixQr,
   Select,
   SectionHeader,
   Summary,
@@ -27,6 +26,7 @@ import {
 
 const STORAGE_CART = "jb-motos-store-cart";
 const STORAGE_CLIENT_SESSION = "jb-motos-client-session";
+const STORAGE_PURCHASE_HISTORY = "jb-motos-store-purchase-history";
 
 const countries = [
   "Brasil",
@@ -95,9 +95,46 @@ function formatPrice(value: number) {
   });
 }
 
+function savePurchaseHistory({
+  items,
+  total,
+  preferenceId,
+  externalReference,
+}: {
+  items: CartItem[];
+  total: number;
+  preferenceId?: string;
+  externalReference?: string;
+}) {
+  try {
+    const auth = readStoreAuth();
+    const raw = localStorage.getItem(STORAGE_PURCHASE_HISTORY);
+    const current = raw ? (JSON.parse(raw) as unknown[]) : [];
+    const history = Array.isArray(current) ? current : [];
+
+    localStorage.setItem(
+      STORAGE_PURCHASE_HISTORY,
+      JSON.stringify([
+        {
+          id: externalReference ?? `compra-${Date.now()}`,
+          mercadoPagoPreferenceId: preferenceId,
+          customerId: auth?.customer.id ?? "cliente-anonimo",
+          customerName: auth?.customer.nome ?? "Cliente da loja",
+          status: "aguardando_pagamento",
+          createdAt: new Date().toISOString(),
+          total,
+          items,
+        },
+        ...history,
+      ]),
+    );
+  } catch {
+    /* historico local opcional */
+  }
+}
+
 export function CheckoutPage() {
-  const [payment, setPayment] = useState<"card" | "pix">("card");
-  const [cardMode, setCardMode] = useState<"credit" | "debit">("credit");
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const clientLogged = Boolean(localStorage.getItem(STORAGE_CLIENT_SESSION));
   const items = readCart();
   const total = items.reduce(
@@ -105,13 +142,51 @@ export function CheckoutPage() {
     0,
   );
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    window.alert(
-      payment === "pix"
-        ? "Pedido criado. O QR Code PIX será integrado com o Mercado Pago."
-        : "Pedido criado. O pagamento por cartão será integrado com o Mercado Pago.",
-    );
+    if (items.length === 0) {
+      window.alert("Seu carrinho está vazio.");
+      return;
+    }
+
+    const formData = new FormData(event.currentTarget);
+    const nome = String(formData.get("nome") ?? "").trim();
+    const sobrenome = String(formData.get("sobrenome") ?? "").trim();
+    const contato = String(formData.get("contato") ?? "").trim();
+
+    setCheckoutLoading(true);
+    try {
+      const preference = await criarCheckoutMercadoPago({
+        items,
+        payer: {
+          name: nome,
+          surname: sobrenome,
+          email: contato.includes("@") ? contato : undefined,
+        },
+      });
+
+      const checkoutUrl = preference.init_point;
+      if (!checkoutUrl) {
+        throw new Error("Mercado Pago não retornou init_point.");
+      }
+
+      savePurchaseHistory({
+        items,
+        total,
+        preferenceId: preference.id,
+        externalReference: preference.external_reference,
+      });
+
+      window.location.href = checkoutUrl;
+    } catch (err) {
+      window.alert(
+        err instanceof Error
+          ? err.message
+          : "Não foi possível abrir o checkout do Mercado Pago.",
+      );
+    } finally {
+      setCheckoutLoading(false);
+    }
   };
 
   return (
@@ -129,7 +204,7 @@ export function CheckoutPage() {
               <h2>Contato</h2>
               {!clientLogged && <Link to="/loja/minha-conta">Entrar</Link>}
             </SectionHeader>
-            <Input type="email" required placeholder="E-mail ou telefone *" />
+            <Input name="contato" type="email" required placeholder="E-mail ou telefone *" />
             <CheckLine>
               <input type="checkbox" /> Envie novidades e ofertas para mim
             </CheckLine>
@@ -144,8 +219,8 @@ export function CheckoutPage() {
                 ))}
               </Select>
               <FieldGrid>
-                <Input placeholder="Nome" />
-                <Input required placeholder="Sobrenome *" />
+                <Input name="nome" placeholder="Nome" />
+                <Input name="sobrenome" required placeholder="Sobrenome *" />
               </FieldGrid>
               <Input required placeholder="CEP *" />
               <Input required placeholder="Endereço *" />
@@ -175,76 +250,14 @@ export function CheckoutPage() {
             <h2>Pagamento</h2>
             <p>Todas as transações serão protegidas e integradas ao Mercado Pago.</p>
             <PaymentBox>
-              <PaymentHead>
-                <CheckLine>
-                  <input
-                    type="radio"
-                    checked={payment === "card"}
-                    onChange={() => setPayment("card")}
-                  />
-                  Cartão de crédito
-                </CheckLine>
-                <strong>MP</strong>
-              </PaymentHead>
-              {payment === "card" && (
-                <PaymentBody>
-                  <FieldGrid>
-                    <CheckLine>
-                      <input
-                        type="radio"
-                        name="card-mode"
-                        checked={cardMode === "credit"}
-                        onChange={() => setCardMode("credit")}
-                      />
-                      Crédito
-                    </CheckLine>
-                    <CheckLine>
-                      <input
-                        type="radio"
-                        name="card-mode"
-                        checked={cardMode === "debit"}
-                        onChange={() => setCardMode("debit")}
-                      />
-                      Débito
-                    </CheckLine>
-                  </FieldGrid>
-                  <Input required placeholder="Número do cartão *" />
-                  <FieldGrid>
-                    <Input required placeholder="Validade (MM / AA) *" />
-                    <Input required placeholder="Código de segurança *" />
-                  </FieldGrid>
-                  <Input required placeholder="Nome no cartão *" />
-                </PaymentBody>
-              )}
-              <PaymentHead>
-                <CheckLine>
-                  <input
-                    type="radio"
-                    checked={payment === "pix"}
-                    onChange={() => setPayment("pix")}
-                  />
-                  PIX
-                </CheckLine>
-                <strong>QR</strong>
-              </PaymentHead>
-              {payment === "pix" && (
-                <PaymentBody>
-                  <PixBox>
-                    <PixQr aria-label="QR Code PIX demonstrativo" />
-                    <div>
-                      <p>
-                        Escaneie o QR Code PIX para pagar. Na integração final,
-                        esse código será gerado pelo Mercado Pago.
-                      </p>
-                      <Input
-                        readOnly
-                        value="00020126580014BR.GOV.BCB.PIX0136JB-MOTOS-PIX-DEMONSTRATIVO"
-                        aria-label="Código PIX copia e cola"
-                      />
-                    </div>
-                  </PixBox>
-                </PaymentBody>
-              )}
+              <MercadoPagoOnly>
+                <strong>Mercado Pago</strong>
+                <p>
+                  Ao clicar em pagar, você será direcionado para a tela segura do
+                  Mercado Pago. Cartão, PIX e demais formas serão preenchidos lá.
+                </p>
+                <span>Valor enviado: {formatPrice(total)}</span>
+              </MercadoPagoOnly>
             </PaymentBox>
           </section>
 
@@ -274,7 +287,9 @@ export function CheckoutPage() {
             </FieldStack>
           </section>
 
-          <PayNow type="submit">Pagar agora</PayNow>
+          <PayNow type="submit" disabled={checkoutLoading}>
+            {checkoutLoading ? "Abrindo Mercado Pago..." : "Pagar agora"}
+          </PayNow>
           <p>Todos os direitos reservados JB Motos</p>
         </FormArea>
 
