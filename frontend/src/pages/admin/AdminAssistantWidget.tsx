@@ -146,7 +146,7 @@ export function AdminAssistantWidget() {
 
       <TriggerButton type="button" onClick={() => setOpen((value) => !value)}>
         <Icon name="robot" size={20} color="#fff" />
-        <span>Admin IA</span>
+        <span>Assistente IA</span>
       </TriggerButton>
     </WidgetRoot>
   );
@@ -156,11 +156,11 @@ const WidgetRoot = styled.div`
   position: fixed;
   right: 1.25rem;
   bottom: 1.25rem;
-  z-index: 120;
+  z-index: 999;
 `;
 
 const TriggerButton = styled.button`
-  min-width: 68px;
+  min-width: 112px;
   height: 58px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.2);

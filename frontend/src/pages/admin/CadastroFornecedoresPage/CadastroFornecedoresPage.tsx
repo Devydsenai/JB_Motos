@@ -5,8 +5,10 @@ import {
   fornecedorInicial,
   useFornecedores,
 } from "@/contexts/FornecedoresContext";
+import { useProdutos } from "@/contexts/ProdutosContext";
 import type { Fornecedor } from "@/types/fornecedor";
 import { exportReportPdf } from "@/utils/exportReports";
+import { importCatalogSpreadsheet } from "@/utils/importCatalogSpreadsheet";
 import {
   ActionButton,
   BrowseButton,
@@ -82,16 +84,19 @@ const CATEGORIAS = [
 export function CadastroFornecedoresPage() {
   const {
     fornecedores,
+    setFornecedores,
     salvarFornecedor,
     excluirFornecedor,
     alternarStatusFornecedor,
   } = useFornecedores();
+  const { produtos, setProdutos } = useProdutos();
 
   const [modalAtivo, setModalAtivo] = useState<ModalAtivo>(null);
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [form, setForm] = useState(fornecedorInicial);
   const [arquivoImportacao, setArquivoImportacao] = useState("");
   const [progressoImportacao, setProgressoImportacao] = useState(0);
+  const [resultadoImportacao, setResultadoImportacao] = useState("");
   const [pagina, setPagina] = useState(1);
 
   const resumo = useMemo(() => {
@@ -142,6 +147,7 @@ export function CadastroFornecedoresPage() {
     setEditandoId(null);
     setArquivoImportacao("");
     setProgressoImportacao(0);
+    setResultadoImportacao("");
     setForm(fornecedorInicial);
   };
 
@@ -178,11 +184,37 @@ export function CadastroFornecedoresPage() {
     }));
   };
 
-  const selecionarArquivo = (event: ChangeEvent<HTMLInputElement>) => {
+  const selecionarArquivo = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
     setArquivoImportacao(file.name);
-    setProgressoImportacao(50);
+    setProgressoImportacao(15);
+    setResultadoImportacao("Lendo planilha e separando produtos/fornecedores...");
+
+    try {
+      setProgressoImportacao(50);
+      const result = await importCatalogSpreadsheet(file, {
+        produtosAtuais: produtos,
+        fornecedoresAtuais: fornecedores,
+      });
+
+      setProgressoImportacao(85);
+      setProdutos(result.produtos);
+      setFornecedores(result.fornecedores);
+      setPagina(1);
+      setProgressoImportacao(100);
+      setResultadoImportacao(
+        `Importação concluída: ${result.fornecedoresCriados} fornecedor(es), ${result.produtosCriados} produto(s). Linhas ignoradas: ${result.linhasIgnoradas}.`,
+      );
+    } catch (error) {
+      setProgressoImportacao(0);
+      setResultadoImportacao(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível importar a planilha. Verifique o arquivo e tente novamente.",
+      );
+    }
   };
 
   const selecionarDocumento = (event: ChangeEvent<HTMLInputElement>) => {
@@ -428,6 +460,9 @@ export function CadastroFornecedoresPage() {
                         />
                       </ProgressBar>
                       <UploadHint>{progressoImportacao}%</UploadHint>
+                      {resultadoImportacao && (
+                        <UploadHint>{resultadoImportacao}</UploadHint>
+                      )}
                     </>
                   ) : (
                     <UploadHint>
@@ -442,9 +477,9 @@ export function CadastroFornecedoresPage() {
                 <ActionButton
                   type="button"
                   disabled={!arquivoImportacao}
-                  onClick={() => setProgressoImportacao(100)}
+                  onClick={fecharModal}
                 >
-                  Importar
+                  Concluir
                 </ActionButton>
               </ModalFooter>
             </UploadModal>

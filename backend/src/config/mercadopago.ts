@@ -20,3 +20,24 @@ export function getMercadoPagoConfig(): MercadoPagoConfig {
 export function getPreferenceClient(): Preference {
   return new Preference(getMercadoPagoConfig());
 }
+
+/** Checkout Pro em ambiente de testes (cartão/PIX fictícios no sandbox do MP). */
+export function isMercadoPagoSandbox(): boolean {
+  if (env.MERCADO_PAGO_SANDBOX === true) return true;
+  if (env.MERCADO_PAGO_SANDBOX === false) return false;
+  return env.NODE_ENV !== "production";
+}
+
+export type MercadoPagoPreferenceLike = {
+  init_point?: string;
+  sandbox_init_point?: string;
+};
+
+export function resolveMercadoPagoCheckoutUrl(
+  preference: MercadoPagoPreferenceLike,
+): string | undefined {
+  if (isMercadoPagoSandbox()) {
+    return preference.sandbox_init_point ?? preference.init_point;
+  }
+  return preference.init_point ?? preference.sandbox_init_point;
+}

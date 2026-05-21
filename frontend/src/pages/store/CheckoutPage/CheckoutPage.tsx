@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@components/atoms/Icon";
 import { criarCheckoutMercadoPago } from "@/services/mercadoPagoCheckout";
-import { readStoreAuth } from "@/services/authStorage";
+import { savePendingPurchase } from "@/utils/storePurchaseHistory";
 import type { CartItem } from "../lojaTypes";
 import {
   CheckLine,
@@ -20,13 +20,13 @@ import {
   SectionHeader,
   Summary,
   SummaryItem,
+  TestModeNotice,
   Top,
   TotalLine,
 } from "./CheckoutPage.styles";
 
 const STORAGE_CART = "jb-motos-store-cart";
 const STORAGE_CLIENT_SESSION = "jb-motos-client-session";
-const STORAGE_PURCHASE_HISTORY = "jb-motos-store-purchase-history";
 
 const countries = [
   "Brasil",
@@ -95,46 +95,12 @@ function formatPrice(value: number) {
   });
 }
 
-function savePurchaseHistory({
-  items,
-  total,
-  preferenceId,
-  externalReference,
-}: {
-  items: CartItem[];
-  total: number;
-  preferenceId?: string;
-  externalReference?: string;
-}) {
-  try {
-    const auth = readStoreAuth();
-    const raw = localStorage.getItem(STORAGE_PURCHASE_HISTORY);
-    const current = raw ? (JSON.parse(raw) as unknown[]) : [];
-    const history = Array.isArray(current) ? current : [];
-
-    localStorage.setItem(
-      STORAGE_PURCHASE_HISTORY,
-      JSON.stringify([
-        {
-          id: externalReference ?? `compra-${Date.now()}`,
-          mercadoPagoPreferenceId: preferenceId,
-          customerId: auth?.customer.id ?? "cliente-anonimo",
-          customerName: auth?.customer.nome ?? "Cliente da loja",
-          status: "aguardando_pagamento",
-          createdAt: new Date().toISOString(),
-          total,
-          items,
-        },
-        ...history,
-      ]),
-    );
-  } catch {
-    /* historico local opcional */
-  }
-}
+const isDevCheckout =
+  import.meta.env.DEV || import.meta.env.VITE_MERCADO_PAGO_TEST_MODE === "true";
 
 export function CheckoutPage() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [testMode, setTestMode] = useState(isDevCheckout);
   const clientLogged = Boolean(localStorage.getItem(STORAGE_CLIENT_SESSION));
   const items = readCart();
   const total = items.reduce(
@@ -150,9 +116,15 @@ export function CheckoutPage() {
     }
 
     const formData = new FormData(event.currentTarget);
-    const nome = String(formData.get("nome") ?? "").trim();
-    const sobrenome = String(formData.get("sobrenome") ?? "").trim();
+    const nome = String(formData.get("nome") ?? "").trim() || "Cliente";
+    const sobrenome = String(formData.get("sobrenome") ?? "").trim() || "Teste";
     const contato = String(formData.get("contato") ?? "").trim();
+    const email =
+      contato.includes("@")
+        ? contato
+        : testMode
+          ? "test_user@testuser.com"
+          : undefined;
 
     setCheckoutLoading(true);
     try {
@@ -161,16 +133,21 @@ export function CheckoutPage() {
         payer: {
           name: nome,
           surname: sobrenome,
-          email: contato.includes("@") ? contato : undefined,
+          email,
         },
       });
 
-      const checkoutUrl = preference.init_point;
+      setTestMode(Boolean(preference.testMode ?? testMode));
+
+      const checkoutUrl =
+        preference.init_point ??
+        preference.sandbox_init_point ??
+        preference.link;
       if (!checkoutUrl) {
         throw new Error("Mercado Pago não retornou init_point.");
       }
 
-      savePurchaseHistory({
+      savePendingPurchase({
         items,
         total,
         preferenceId: preference.id,
@@ -204,7 +181,16 @@ export function CheckoutPage() {
               <h2>Contato</h2>
               {!clientLogged && <Link to="/loja/minha-conta">Entrar</Link>}
             </SectionHeader>
-            <Input name="contato" type="email" required placeholder="E-mail ou telefone *" />
+            <Input
+              name="contato"
+              type="email"
+              required={!isDevCheckout}
+              placeholder={
+                isDevCheckout
+                  ? "E-mail (opcional em teste — padrão test_user@testuser.com)"
+                  : "E-mail ou telefone *"
+              }
+            />
             <CheckLine>
               <input type="checkbox" /> Envie novidades e ofertas para mim
             </CheckLine>
@@ -220,13 +206,17 @@ export function CheckoutPage() {
               </Select>
               <FieldGrid>
                 <Input name="nome" placeholder="Nome" />
-                <Input name="sobrenome" required placeholder="Sobrenome *" />
+                <Input
+                  name="sobrenome"
+                  required={!isDevCheckout}
+                  placeholder={isDevCheckout ? "Sobrenome (opcional)" : "Sobrenome *"}
+                />
               </FieldGrid>
-              <Input required placeholder="CEP *" />
-              <Input required placeholder="Endereço *" />
+              <Input required={!isDevCheckout} placeholder={isDevCheckout ? "CEP (opcional)" : "CEP *"} />
+              <Input required={!isDevCheckout} placeholder={isDevCheckout ? "Endereço (opcional)" : "Endereço *"} />
               <Input placeholder="Apartamento, suíte, etc. (opcional)" />
               <FieldGrid>
-                <Input required placeholder="Cidade *" />
+                <Input required={!isDevCheckout} placeholder={isDevCheckout ? "Cidade (opcional)" : "Cidade *"} />
                 <Select defaultValue="Pernambuco">
                   {brazilStates.map((state) => (
                     <option key={state}>{state}</option>
@@ -254,9 +244,30 @@ export function CheckoutPage() {
                 <strong>Mercado Pago</strong>
                 <p>
                   Ao clicar em pagar, você será direcionado para a tela segura do
-                  Mercado Pago. Cartão, PIX e demais formas serão preenchidos lá.
+                  Mercado Pago com <strong>cartão</strong> e <strong>PIX</strong>.
                 </p>
                 <span>Valor enviado: {formatPrice(total)}</span>
+                {(testMode || isDevCheckout) && (
+                  <TestModeNotice>
+                    <strong>Modo teste (sandbox)</strong>
+                    Use o checkout de testes do Mercado Pago — não precisa de cartão
+                    ou CPF reais.
+                    <ul>
+                      <li>
+                        <strong>Cartão aprovado:</strong> 5031 4332 1540 6351 · CVV
+                        123 · validade 11/30
+                      </li>
+                      <li>
+                        <strong>CPF de teste:</strong> 123.456.789-09 (ou qualquer
+                        formato válido no sandbox)
+                      </li>
+                      <li>
+                        <strong>PIX:</strong> escolha PIX na tela do Mercado Pago e
+                        simule o pagamento de teste
+                      </li>
+                    </ul>
+                  </TestModeNotice>
+                )}
               </MercadoPagoOnly>
             </PaymentBox>
           </section>
@@ -271,13 +282,16 @@ export function CheckoutPage() {
               </Select>
               <FieldGrid>
                 <Input placeholder="Nome" />
-                <Input required placeholder="Sobrenome *" />
+                <Input
+                  required={!isDevCheckout}
+                  placeholder={isDevCheckout ? "Sobrenome (opcional)" : "Sobrenome *"}
+                />
               </FieldGrid>
-              <Input required placeholder="CEP *" />
-              <Input required placeholder="Endereço *" />
+              <Input required={!isDevCheckout} placeholder={isDevCheckout ? "CEP (opcional)" : "CEP *"} />
+              <Input required={!isDevCheckout} placeholder={isDevCheckout ? "Endereço (opcional)" : "Endereço *"} />
               <Input placeholder="Apartamento, suíte, etc. (opcional)" />
               <FieldGrid>
-                <Input required placeholder="Cidade *" />
+                <Input required={!isDevCheckout} placeholder={isDevCheckout ? "Cidade (opcional)" : "Cidade *"} />
                 <Select defaultValue="Pernambuco">
                   {brazilStates.map((state) => (
                     <option key={state}>{state}</option>

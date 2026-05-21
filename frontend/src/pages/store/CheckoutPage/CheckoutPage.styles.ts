@@ -199,6 +199,28 @@ export const MercadoPagoOnly = styled.div`
   }
 `;
 
+export const TestModeNotice = styled.div`
+  margin-top: 0.75rem;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  border: 1px dashed rgba(196, 30, 30, 0.45);
+  background: rgba(196, 30, 30, 0.08);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: ${({ theme }) => (theme.mode === "light" ? "#7f1d1d" : "#fecaca")};
+
+  strong {
+    display: block;
+    margin-bottom: 0.35rem;
+    color: #c41e1e;
+  }
+
+  ul {
+    margin: 0.35rem 0 0;
+    padding-left: 1.1rem;
+  }
+`;
+
 export const PixBox = styled.div`
   display: grid;
   grid-template-columns: 150px 1fr;

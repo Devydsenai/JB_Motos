@@ -29,6 +29,7 @@ import { ContatoLojaPage } from "@pages/store/ContatoLojaPage";
 import { CatalogoPage } from "@pages/store/CatalogoPage";
 import { OfertasPage } from "@pages/store/OfertasPage";
 import { CheckoutPage } from "@pages/store/CheckoutPage";
+import { PagamentoConcluidoPage } from "@pages/store/PagamentoConcluidoPage";
 
 export function AppRoutes() {
   return (
@@ -77,6 +78,7 @@ export function AppRoutes() {
         <Route path="catalogo" element={<CatalogoPage />} />
         <Route path="ofertas" element={<OfertasPage />} />
         <Route path="checkout" element={<CheckoutPage />} />
+        <Route path="pagamento-concluido" element={<PagamentoConcluidoPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/admin" replace />} />

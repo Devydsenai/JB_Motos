@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Icon } from "@components/atoms/Icon";
 import { ThemeToggle } from "@components/molecules/ThemeToggle";
 import logo from "@components/atoms/assets/Logo.JBmotos.svg";
@@ -172,7 +172,22 @@ function readCart(): CartItem[] {
 
 export function LojaHomePage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [cartItems, setCartItems] = useState<CartItem[]>(readCart);
+
+  useEffect(() => {
+    const mpReturn =
+      searchParams.has("collection_status") ||
+      searchParams.has("external_reference") ||
+      searchParams.has("payment_id") ||
+      searchParams.has("preference_id");
+
+    if (mpReturn) {
+      navigate(`/loja/pagamento-concluido?${searchParams.toString()}`, {
+        replace: true,
+      });
+    }
+  }, [navigate, searchParams]);
   const [wishlistItems, setWishlistItems] = useState<LojaProduct[]>(readWishlist);
   const [addedProduct, setAddedProduct] = useState<LojaProduct | null>(null);
   const [addedQuantity, setAddedQuantity] = useState(1);

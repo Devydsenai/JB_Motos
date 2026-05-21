@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "@components/atoms/Icon";
 import { ThemeToggle } from "@components/molecules/ThemeToggle";
@@ -29,6 +29,7 @@ import {
   NoteBox,
   Page,
   PurchaseHistory,
+  PurchaseStatusBadge,
   ProductMeta,
   QuantityBox,
   RedBtn,
@@ -36,31 +37,17 @@ import {
   Title,
 } from "./CarrinhoPage.styles";
 
-const STORAGE_CART = "jb-motos-store-cart";
-const STORAGE_PURCHASE_HISTORY = "jb-motos-store-purchase-history";
-
-type PurchaseHistoryItem = {
-  id: string;
-  status: string;
-  createdAt: string;
-  total: number;
-  items: CartItem[];
-};
+import {
+  readPurchaseHistoryForCurrentCustomer,
+  purchaseStatusLabel,
+  STORAGE_CART,
+  type PurchaseHistoryItem,
+} from "@/utils/storePurchaseHistory";
 
 function readCart(): CartItem[] {
   try {
     const raw = localStorage.getItem(STORAGE_CART);
     const parsed = raw ? (JSON.parse(raw) as CartItem[]) : [];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function readPurchaseHistory(): PurchaseHistoryItem[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_PURCHASE_HISTORY);
-    const parsed = raw ? (JSON.parse(raw) as PurchaseHistoryItem[]) : [];
     return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
@@ -81,8 +68,12 @@ function formatPrice(value: number) {
 
 export function CarrinhoPage() {
   const [items, setItems] = useState<CartItem[]>(readCart);
-  const [history] = useState<PurchaseHistoryItem[]>(readPurchaseHistory);
+  const [history, setHistory] = useState<PurchaseHistoryItem[]>([]);
   const [toast, setToast] = useState("");
+
+  useEffect(() => {
+    setHistory(readPurchaseHistoryForCurrentCustomer());
+  }, []);
   const totalItens = items.reduce((total, item) => total + item.quantity, 0);
   const totalPrice = items.reduce(
     (total, item) => total + parsePrice(item.price) * item.quantity,
@@ -233,16 +224,16 @@ export function CarrinhoPage() {
 
         {history.length > 0 && (
           <PurchaseHistory>
-            <h2>Histórico de compras</h2>
-            {history.slice(0, 5).map((purchase) => (
+            <h2>Histórico de compras da sua conta</h2>
+            {history.slice(0, 10).map((purchase) => (
               <article key={purchase.id}>
                 <div>
-                  <strong>{purchase.id}</strong>
+                  <strong>Pedido {purchase.id}</strong>
+                  <PurchaseStatusBadge $status={purchase.status}>
+                    {purchaseStatusLabel(purchase.status)}
+                  </PurchaseStatusBadge>
                   <span>
-                    {new Date(purchase.createdAt).toLocaleString("pt-BR")} ·{" "}
-                    {purchase.status === "aguardando_pagamento"
-                      ? "Aguardando pagamento"
-                      : purchase.status}
+                    {new Date(purchase.paidAt ?? purchase.createdAt).toLocaleString("pt-BR")}
                   </span>
                 </div>
                 <p>

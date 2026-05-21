@@ -1,7 +1,12 @@
 import { Decimal } from "../../shared/utils/decimal.js";
 import { prisma } from "../../prisma/client.js";
 import { env } from "../../config/env.js";
-import { getFrontendUrl, getPreferenceClient } from "../../config/mercadopago.js";
+import {
+  getFrontendUrl,
+  getPreferenceClient,
+  isMercadoPagoSandbox,
+  resolveMercadoPagoCheckoutUrl,
+} from "../../config/mercadopago.js";
 import { AppError, NotFoundError } from "../../shared/errors/AppError.js";
 import { CreatePaymentDTO, CreatePreferenceDTO } from "./payments.schemas.js";
 
@@ -13,14 +18,82 @@ export class PaymentsService {
   private buildBackUrls() {
     const frontend = this.getMercadoPagoFrontendUrl();
     return {
-      success: `${frontend}/loja`,
-      failure: `${frontend}/loja/checkout/cancelado`,
-      pending: `${frontend}/loja/checkout/pendente`,
+      success: `${frontend}/loja/pagamento-concluido`,
+      failure: `${frontend}/loja/pagamento-concluido?status=failure`,
+      pending: `${frontend}/loja/pagamento-concluido?status=pending`,
     };
   }
 
   private canUseAutoReturn(backUrls: { success: string }) {
     return backUrls.success.startsWith("https://");
+  }
+
+  /** PIX e cartão no Checkout Pro; em sandbox não exclui métodos de teste. */
+  private buildPaymentMethods() {
+    return {
+      installments: 12,
+      excluded_payment_types: [{ id: "ticket" }],
+      excluded_payment_methods: [],
+    };
+  }
+
+  private buildPayer(
+    payer?: { name?: string; surname?: string; email?: string },
+    fallbackName?: string,
+  ) {
+    const fullName = [payer?.name, payer?.surname].filter(Boolean).join(" ").trim();
+    const fromFallback = fallbackName?.trim() ?? "";
+    const nameSource = fullName || fromFallback || "Cliente Teste";
+    const [firstName, ...rest] = nameSource.split(/\s+/);
+    const surname = rest.join(" ") || "JB Motos";
+
+    const email =
+      payer?.email?.trim() ||
+      (isMercadoPagoSandbox() ? "test_user@testuser.com" : undefined);
+
+    const base: Record<string, unknown> = {
+      name: firstName,
+      surname,
+      ...(email && { email }),
+    };
+
+    if (isMercadoPagoSandbox()) {
+      base.identification = { type: "CPF", number: "12345678909" };
+    }
+
+    return base;
+  }
+
+  private mapPreferenceResponse(
+    mp: {
+      id?: string;
+      init_point?: string;
+      sandbox_init_point?: string;
+      collector_id?: number;
+      preference_expired?: boolean;
+      date_created?: string;
+    },
+    externalReference: string,
+  ) {
+    if (mp.preference_expired) {
+      throw new AppError("Preferência de pagamento expirada. Crie uma nova.", 410);
+    }
+
+    const checkoutLink = resolveMercadoPagoCheckoutUrl(mp);
+    if (!checkoutLink) {
+      throw new AppError("Mercado Pago não retornou link de checkout", 502);
+    }
+
+    return {
+      link: checkoutLink,
+      id: mp.id,
+      init_point: checkoutLink,
+      sandbox_init_point: mp.sandbox_init_point,
+      collector_id: mp.collector_id,
+      external_reference: externalReference,
+      preference_expired: mp.preference_expired ?? false,
+      testMode: isMercadoPagoSandbox(),
+    };
   }
 
   /**
@@ -61,10 +134,10 @@ export class PaymentsService {
       });
     }
 
-    const payerEmail =
-      dto.payer?.email ?? order.entregaEmail ?? order.storeCustomer?.email ?? undefined;
     const payerName =
       dto.payer?.name ?? order.entregaNome ?? order.storeCustomer?.nome ?? undefined;
+    const payerEmail =
+      dto.payer?.email ?? order.entregaEmail ?? order.storeCustomer?.email ?? undefined;
 
     const backUrls = this.buildBackUrls();
     const body: Record<string, unknown> = {
@@ -72,19 +145,22 @@ export class PaymentsService {
       external_reference: order.id,
       statement_descriptor: "JB MOTOS",
       back_urls: backUrls,
+      payment_methods: this.buildPaymentMethods(),
+      binary_mode: false,
     };
 
     if (this.canUseAutoReturn(backUrls)) {
       body.auto_return = "approved";
     }
 
-    if (payerEmail || payerName) {
-      body.payer = {
-        ...(payerName && { name: payerName.split(" ")[0] }),
-        ...(payerName && { surname: payerName.split(" ").slice(1).join(" ") || "Cliente" }),
-        ...(payerEmail && { email: payerEmail }),
-      };
-    }
+    body.payer = this.buildPayer(
+      {
+        name: dto.payer?.name,
+        surname: dto.payer?.surname,
+        email: payerEmail,
+      },
+      payerName,
+    );
 
     if (env.API_PUBLIC_URL) {
       body.notification_url = `${env.API_PUBLIC_URL}/api/v1/store/payments/webhook/mercadopago`;
@@ -93,16 +169,7 @@ export class PaymentsService {
     const preference = getPreferenceClient();
     const response = await preference.create({ body: body as any });
     const mp = response as typeof response & { preference_expired?: boolean };
-
-    if (mp.preference_expired) {
-      throw new AppError("Preferência de pagamento expirada. Crie uma nova.", 410);
-    }
-
-    const checkoutLink = mp.init_point;
-
-    if (!checkoutLink) {
-      throw new AppError("Mercado Pago não retornou link de checkout", 502);
-    }
+    const checkout = this.mapPreferenceResponse(mp, order.id);
 
     await prisma.payment.create({
       data: {
@@ -119,19 +186,12 @@ export class PaymentsService {
           sandbox_init_point: mp.sandbox_init_point,
           preference_id: mp.id,
           date_created: mp.date_created,
+          test_mode: checkout.testMode,
         },
       },
     });
 
-    return {
-      /** URL para redirecionar o cliente (use window.location.href = link) */
-      link: checkoutLink,
-      id: mp.id,
-      init_point: checkoutLink,
-      collector_id: mp.collector_id,
-      external_reference: order.id,
-      preference_expired: mp.preference_expired ?? false,
-    };
+    return checkout;
   }
 
   /**
@@ -154,19 +214,15 @@ export class PaymentsService {
       external_reference: externalReference,
       statement_descriptor: "JB MOTOS",
       back_urls: backUrls,
+      payment_methods: this.buildPaymentMethods(),
+      binary_mode: false,
     };
 
     if (this.canUseAutoReturn(backUrls)) {
       body.auto_return = "approved";
     }
 
-    if (dto.payer?.email || dto.payer?.name || dto.payer?.surname) {
-      body.payer = {
-        ...(dto.payer.name && { name: dto.payer.name }),
-        ...(dto.payer.surname && { surname: dto.payer.surname }),
-        ...(dto.payer.email && { email: dto.payer.email }),
-      };
-    }
+    body.payer = this.buildPayer(dto.payer);
 
     if (env.API_PUBLIC_URL) {
       body.notification_url = `${env.API_PUBLIC_URL}/api/v1/store/payments/webhook/mercadopago`;
@@ -176,24 +232,7 @@ export class PaymentsService {
     const response = await preference.create({ body: body as any });
     const mp = response as typeof response & { preference_expired?: boolean };
 
-    if (mp.preference_expired) {
-      throw new AppError("Preferência de pagamento expirada. Crie uma nova.", 410);
-    }
-
-    const checkoutLink = mp.init_point;
-
-    if (!checkoutLink) {
-      throw new AppError("Mercado Pago não retornou link de checkout", 502);
-    }
-
-    return {
-      link: checkoutLink,
-      id: mp.id,
-      init_point: checkoutLink,
-      collector_id: mp.collector_id,
-      external_reference: externalReference,
-      preference_expired: mp.preference_expired ?? false,
-    };
+    return this.mapPreferenceResponse(mp, externalReference);
   }
 
   async create(dto: CreatePaymentDTO) {

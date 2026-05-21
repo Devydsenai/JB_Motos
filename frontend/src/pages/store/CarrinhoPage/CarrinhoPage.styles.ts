@@ -245,3 +245,24 @@ export const PurchaseHistory = styled.section`
     margin: 0;
   }
 `;
+
+export const PurchaseStatusBadge = styled.span<{ $status: string }>`
+  display: inline-flex;
+  width: fit-content;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  background: ${({ $status }) => {
+    if ($status === "pago") return "rgba(22, 163, 74, 0.15)";
+    if ($status === "pendente") return "rgba(217, 119, 6, 0.15)";
+    if ($status === "cancelado") return "rgba(220, 38, 38, 0.15)";
+    return "rgba(100, 116, 139, 0.15)";
+  }};
+  color: ${({ $status }) => {
+    if ($status === "pago") return "#16a34a";
+    if ($status === "pendente") return "#d97706";
+    if ($status === "cancelado") return "#dc2626";
+    return "#64748b";
+  }};
+`;

@@ -12,6 +12,11 @@ const envSchema = z.object({
   FRONTEND_URL: z.string().url().optional(),
   API_PUBLIC_URL: z.string().url().optional(),
   MERCADO_PAGO_ACCESS_TOKEN: z.string().optional(),
+  /** true = usa sandbox_init_point e dados de teste (padrão em development) */
+  MERCADO_PAGO_SANDBOX: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((v) => (v === undefined ? undefined : v === "true")),
 });
 
 const parsed = envSchema.safeParse(process.env);

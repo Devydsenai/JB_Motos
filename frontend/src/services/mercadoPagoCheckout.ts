@@ -4,8 +4,10 @@ import type { CartItem } from "@/pages/store/lojaTypes";
 type MercadoPagoPreferenceResponse = {
   link?: string;
   init_point?: string;
+  sandbox_init_point?: string;
   id?: string;
   external_reference?: string;
+  testMode?: boolean;
 };
 
 type Payer = {
