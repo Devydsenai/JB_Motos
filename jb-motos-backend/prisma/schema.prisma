@@ -1,0 +1,191 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum Role {
+  PROPRIETARIO
+  ATENDENTE
+  MECANICO
+
+  @@map("role")
+}
+
+enum StatusOS {
+  ABERTA
+  EM_ANALISE
+  AGUARDANDO_PECA
+  EM_EXECUCAO
+  FINALIZADA
+  CANCELADA
+
+  @@map("status_os")
+}
+
+// ============================================================
+// MODEL: User
+// ============================================================
+
+model User {
+  id        String   @id @default(uuid()) @db.Uuid
+  nome      String   @db.VarChar(120)
+  email     String   @unique @db.VarChar(120)
+  senhaHash String   @map("senha_hash") @db.VarChar(255)
+  role      Role     @default(ATENDENTE)
+  telefone  String?  @db.VarChar(20)
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relações
+  serviceOrdersAtendente ServiceOrder[] @relation("Atendente")
+  serviceOrdersMecanico  ServiceOrder[] @relation("Mecanico")
+  historyEntries         OSHistory[]
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+// ============================================================
+// MODEL: Client
+// ============================================================
+
+model Client {
+  id          String   @id @default(uuid()) @db.Uuid
+  nome        String   @db.VarChar(120)
+  cpf         String?  @unique @db.VarChar(14)
+  telefone    String   @unique @db.VarChar(20)
+  email       String?  @db.VarChar(120)
+  endereco    String?  @db.VarChar(255)
+  cidade      String?  @db.VarChar(80)
+  observacoes String?  @db.Text
+  ativo       Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relações
+  motorcycles Motorcycle[]
+
+  @@index([telefone])
+  @@index([nome])
+  @@map("clients")
+}
+
+// ============================================================
+// MODEL: Motorcycle
+// ============================================================
+
+model Motorcycle {
+  id          String   @id @default(uuid()) @db.Uuid
+  placa       String   @unique @db.VarChar(10)
+  marca       String   @db.VarChar(60)
+  modelo      String   @db.VarChar(80)
+  ano         Int
+  cor         String?  @db.VarChar(40)
+  kmAtual     Int?     @default(0) @map("km_atual")
+  observacoes String?  @db.Text
+  ativo       Boolean  @default(true)
+  clienteId   String   @map("cliente_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relações
+  client        Client         @relation(fields: [clienteId], references: [id], onDelete: Restrict)
+  serviceOrders ServiceOrder[]
+
+  @@index([clienteId])
+  @@index([placa])
+  @@map("motorcycles")
+}
+
+// ============================================================
+// MODEL: ServiceOrder (Ordem de Serviço)
+// ============================================================
+
+model ServiceOrder {
+  id                  String    @id @default(uuid()) @db.Uuid
+  numero              Int       @unique @default(autoincrement())
+  status              StatusOS  @default(ABERTA)
+  descricaoProblema   String    @map("descricao_problema") @db.Text
+  observacoes         String?   @db.Text
+  observacoesTecnicas String?   @map("observacoes_tecnicas") @db.Text
+  kmEntrada           Int?      @map("km_entrada")
+  previsaoEntrega     DateTime? @map("previsao_entrega")
+  dataFinalizacao     DateTime? @map("data_finalizacao")
+  valorMaoObra        Decimal   @default(0) @map("valor_mao_obra") @db.Decimal(10, 2)
+  valorPecas          Decimal   @default(0) @map("valor_pecas") @db.Decimal(10, 2)
+  valorTotal          Decimal   @default(0) @map("valor_total") @db.Decimal(10, 2)
+  desconto            Decimal   @default(0) @db.Decimal(10, 2)
+  valorFinal          Decimal   @default(0) @map("valor_final") @db.Decimal(10, 2)
+  motocicletaId       String    @map("motocicleta_id") @db.Uuid
+  mecanicoId          String?   @map("mecanico_id") @db.Uuid
+  atendenteId         String    @map("atendente_id") @db.Uuid
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  // Relações
+  motorcycle  Motorcycle @relation(fields: [motocicletaId], references: [id], onDelete: Restrict)
+  mecanico    User?      @relation("Mecanico", fields: [mecanicoId], references: [id], onDelete: SetNull)
+  atendente   User       @relation("Atendente", fields: [atendenteId], references: [id], onDelete: Restrict)
+  parts       Part[]
+  history     OSHistory[]
+
+  @@index([status])
+  @@index([motocicletaId])
+  @@index([mecanicoId])
+  @@index([atendenteId])
+  @@index([createdAt(sort: Desc)])
+  @@map("service_orders")
+}
+
+// ============================================================
+// MODEL: Part (Peças)
+// ============================================================
+
+model Part {
+  id             String   @id @default(uuid()) @db.Uuid
+  descricao      String   @db.VarChar(200)
+  quantidade     Decimal  @default(1) @db.Decimal(10, 3)
+  valorUnitario  Decimal  @map("valor_unitario") @db.Decimal(10, 2)
+  valorTotal     Decimal  @default(0) @map("valor_total") @db.Decimal(10, 2)
+  serviceOrderId String   @map("service_order_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relações
+  serviceOrder ServiceOrder @relation(fields: [serviceOrderId], references: [id], onDelete: Cascade)
+
+  @@index([serviceOrderId])
+  @@map("parts")
+}
+
+// ============================================================
+// MODEL: OSHistory (Timeline de status)
+// ============================================================
+
+model OSHistory {
+  id              String    @id @default(uuid()) @db.Uuid
+  serviceOrderId  String    @map("service_order_id") @db.Uuid
+  userId          String    @map("user_id") @db.Uuid
+  statusAnterior  StatusOS? @map("status_anterior")
+  statusNovo      StatusOS  @map("status_novo")
+  observacao      String?   @db.Text
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  // Relações
+  serviceOrder ServiceOrder @relation(fields: [serviceOrderId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([serviceOrderId])
+  @@map("os_history")
+}

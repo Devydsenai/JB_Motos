@@ -1,0 +1,1 @@
+export { CarrinhoLoja } from "./CarrinhoLoja";

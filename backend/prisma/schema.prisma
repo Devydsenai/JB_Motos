@@ -7,11 +7,506 @@ datasource db {
   provider = "postgresql"
 }
 
-/// Tabela de teste — validar Prisma + Supabase antes da equipe criar o schema completo
-model Teste {
-  id        Int      @id @default(autoincrement())
-  nome      String
-  createdAt DateTime @default(now()) @map("created_at")
+// ============================================================
+// ENUMS
+// ============================================================
 
-  @@map("teste")
+enum Role {
+  PROPRIETARIO
+  ATENDENTE
+  MECANICO
+
+  @@map("role")
+}
+
+enum StatusRh {
+  ATIVO
+  FERIAS
+  GESTANTE
+  ACIDENTE
+  AVISO_PREVIO
+  AFASTADO
+  DEMITIDO
+
+  @@map("status_rh")
+}
+
+enum StatusOS {
+  ABERTA
+  EM_ANALISE
+  AGUARDANDO_PECA
+  EM_EXECUCAO
+  FINALIZADA
+  CANCELADA
+
+  @@map("status_os")
+}
+
+enum OrigemOS {
+  OFICINA
+  LOJA_ONLINE
+
+  @@map("origem_os")
+}
+
+enum StatusFornecedor {
+  ATIVO
+  INATIVO
+  PENDENTE
+  CRITICO
+
+  @@map("status_fornecedor")
+}
+
+enum StockMovementType {
+  ENTRADA
+  SAIDA
+  AJUSTE
+
+  @@map("stock_movement_type")
+}
+
+enum OrderStatus {
+  RASCUNHO
+  PENDENTE
+  PAGO
+  ENVIADO
+  ENTREGUE
+  CANCELADO
+
+  @@map("order_status")
+}
+
+enum PaymentMethod {
+  PIX
+  CARTAO_CREDITO
+  CARTAO_DEBITO
+  BOLETO
+
+  @@map("payment_method")
+}
+
+enum PaymentStatus {
+  PENDENTE
+  APROVADO
+  RECUSADO
+  CANCELADO
+  REEMBOLSADO
+
+  @@map("payment_status")
+}
+
+// ============================================================
+// ADMIN: User (funcionários + proprietário)
+// ============================================================
+
+model User {
+  id            String    @id @default(uuid()) @db.Uuid
+  codigoServico String?   @unique @map("codigo_servico") @db.VarChar(6)
+  nome          String    @db.VarChar(120)
+  sobrenome     String?   @db.VarChar(120)
+  email         String    @unique @db.VarChar(120)
+  senhaHash     String    @map("senha_hash") @db.VarChar(255)
+  role          Role      @default(ATENDENTE)
+  telefone      String?   @db.VarChar(20)
+  fotoUrl       String?   @map("foto_url") @db.Text
+  cpf           String?   @unique @db.VarChar(14)
+  salarioBruto  Decimal?  @map("salario_bruto") @db.Decimal(12, 2)
+  dataAdmissao  DateTime? @map("data_admissao") @db.Date
+  dataDemissao  DateTime? @map("data_demissao") @db.Date
+  motivoDemissao String?  @map("motivo_demissao") @db.VarChar(255)
+  feriasInicio  DateTime? @map("ferias_inicio") @db.Date
+  feriasFim     DateTime? @map("ferias_fim") @db.Date
+  cnh           String?   @db.VarChar(20)
+  cnhValidade   DateTime? @map("cnh_validade") @db.Date
+  diaCicloMenstrual Int?  @map("dia_ciclo_menstrual")
+  gestante      Boolean   @default(false)
+  dataPrevisaoParto DateTime? @map("data_previsao_parto") @db.Date
+  acidente      Boolean   @default(false)
+  acidenteData  DateTime? @map("acidente_data") @db.Date
+  acidenteDescricao String? @map("acidente_descricao") @db.Text
+  avisoPrevio   Boolean   @default(false) @map("aviso_previo")
+  avisoPrevioInicio DateTime? @map("aviso_previo_inicio") @db.Date
+  avisoPrevioFim DateTime? @map("aviso_previo_fim") @db.Date
+  statusRh      StatusRh  @default(ATIVO) @map("status_rh")
+  ativo         Boolean   @default(true)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  serviceOrdersAtendente ServiceOrder[] @relation("Atendente")
+  serviceOrdersMecanico  ServiceOrder[] @relation("Mecanico")
+  historyEntries         OSHistory[]
+  stockMovements         StockMovement[]
+
+  @@index([email])
+  @@index([role])
+  @@index([codigoServico])
+  @@map("users")
+}
+
+// ============================================================
+// OFICINA: Client & Motorcycle
+// ============================================================
+
+model Client {
+  id          String   @id @default(uuid()) @db.Uuid
+  nome        String   @db.VarChar(120)
+  cpf         String?  @unique @db.VarChar(14)
+  telefone    String   @unique @db.VarChar(20)
+  email       String?  @db.VarChar(120)
+  endereco    String?  @db.VarChar(255)
+  cidade      String?  @db.VarChar(80)
+  observacoes String?  @db.Text
+  ativo       Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  motorcycles   Motorcycle[]
+  storeCustomer StoreCustomer?
+
+  @@index([telefone])
+  @@index([nome])
+  @@map("clients")
+}
+
+model Motorcycle {
+  id          String   @id @default(uuid()) @db.Uuid
+  placa       String   @unique @db.VarChar(10)
+  marca       String   @db.VarChar(60)
+  modelo      String   @db.VarChar(80)
+  ano         Int
+  cor         String?  @db.VarChar(40)
+  kmAtual     Int?     @default(0) @map("km_atual")
+  observacoes String?  @db.Text
+  ativo       Boolean  @default(true)
+  clienteId   String   @map("cliente_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  client        Client         @relation(fields: [clienteId], references: [id], onDelete: Restrict)
+  serviceOrders ServiceOrder[]
+
+  @@index([clienteId])
+  @@index([placa])
+  @@map("motorcycles")
+}
+
+// ============================================================
+// ESTOQUE: Supplier, Product, StockMovement
+// ============================================================
+
+model Supplier {
+  id                  String           @id @default(uuid()) @db.Uuid
+  codigo              String           @unique @db.VarChar(30)
+  nome                String           @db.VarChar(200)
+  cnpj                String?          @unique @db.VarChar(18)
+  tipo                String?          @db.VarChar(60)
+  categoria           String?          @db.VarChar(80)
+  fornecedorDesde     DateTime?        @map("fornecedor_desde") @db.Date
+  contato             String?          @db.VarChar(120)
+  email               String?          @db.VarChar(120)
+  telefone            String?          @db.VarChar(20)
+  endereco            String?          @db.VarChar(255)
+  cidade              String?          @db.VarChar(80)
+  estado              String?          @db.VarChar(2)
+  condicoesPagamento  String?          @map("condicoes_pagamento") @db.VarChar(120)
+  condicoesPagamento2 String?          @map("condicoes_pagamento_2") @db.VarChar(120)
+  observacoes         String?          @db.Text
+  status              StatusFornecedor @default(PENDENTE)
+  documentoNome       String?          @map("documento_nome") @db.VarChar(255)
+  ativo               Boolean          @default(true)
+  createdAt           DateTime         @default(now()) @map("created_at")
+  updatedAt           DateTime         @updatedAt @map("updated_at")
+
+  products Product[]
+
+  @@index([nome])
+  @@index([status])
+  @@map("suppliers")
+}
+
+model Product {
+  id               String    @id @default(uuid()) @db.Uuid
+  nome             String    @db.VarChar(200)
+  codigo           String    @unique @db.VarChar(50)
+  descricao        String?   @db.Text
+  categoria        String?   @db.VarChar(80)
+  marcasCompativel String[]  @default([]) @map("marcas_compativel")
+  valor            Decimal   @default(0) @db.Decimal(10, 2)
+  precoCusto       Decimal   @default(0) @map("preco_custo") @db.Decimal(10, 2)
+  quantidade       Decimal   @default(0) @db.Decimal(10, 3)
+  quantidadeMinima Decimal   @default(0) @map("quantidade_minima") @db.Decimal(10, 3)
+  visivelLoja      Boolean   @default(false) @map("visivel_loja")
+  ativo            Boolean   @default(true)
+  codigoBarras     String?   @map("codigo_barras") @db.VarChar(50)
+  localizacao      String?   @db.VarChar(80)
+  peso             String?   @db.VarChar(30)
+  dimensoes        String?   @db.VarChar(60)
+  validade         DateTime? @db.Date
+  imagemUrl        String?   @map("imagem_url") @db.Text
+  fornecedorId     String?   @map("fornecedor_id") @db.Uuid
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  supplier       Supplier?        @relation(fields: [fornecedorId], references: [id], onDelete: SetNull)
+  stockMovements StockMovement[]
+  cartItems      CartItem[]
+  wishlistItems  WishlistItem[]
+  orderItems     OrderItem[]
+  serviceOrderProducts ServiceOrderProduct[]
+
+  @@index([categoria])
+  @@index([visivelLoja])
+  @@index([fornecedorId])
+  @@map("products")
+}
+
+model StockMovement {
+  id          String            @id @default(uuid()) @db.Uuid
+  productId   String            @map("product_id") @db.Uuid
+  tipo        StockMovementType
+  quantidade  Decimal           @db.Decimal(10, 3)
+  saldoAntes  Decimal           @map("saldo_antes") @db.Decimal(10, 3)
+  saldoDepois Decimal           @map("saldo_depois") @db.Decimal(10, 3)
+  observacao  String?           @db.Text
+  userId      String?           @map("user_id") @db.Uuid
+  createdAt   DateTime          @default(now()) @map("created_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([productId])
+  @@index([createdAt(sort: Desc)])
+  @@map("stock_movements")
+}
+
+// ============================================================
+// LOJA: StoreCustomer, motos, carrinho, favoritos, pedidos
+// ============================================================
+
+model StoreCustomer {
+  id        String   @id @default(uuid()) @db.Uuid
+  nome      String   @db.VarChar(120)
+  email     String   @unique @db.VarChar(120)
+  senhaHash String   @map("senha_hash") @db.VarChar(255)
+  telefone  String?  @db.VarChar(20)
+  cpf       String?  @unique @db.VarChar(14)
+  ativo     Boolean  @default(true)
+  clientId  String?  @unique @map("client_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  client        Client?            @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  motorcycles   StoreMotorcycle[]
+  cartItems     CartItem[]
+  wishlistItems WishlistItem[]
+  orders        StoreOrder[]
+  serviceOrders ServiceOrder[]
+
+  @@index([email])
+  @@map("store_customers")
+}
+
+model StoreMotorcycle {
+  id              String   @id @default(uuid()) @db.Uuid
+  storeCustomerId String   @map("store_customer_id") @db.Uuid
+  marca           String   @db.VarChar(60)
+  modelo          String   @db.VarChar(80)
+  placa           String?  @db.VarChar(10)
+  identificador   String?  @db.VarChar(60)
+  imagemUrl       String?  @map("imagem_url") @db.Text
+  principal       Boolean  @default(true)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  storeCustomer StoreCustomer @relation(fields: [storeCustomerId], references: [id], onDelete: Cascade)
+
+  @@index([storeCustomerId])
+  @@map("store_motorcycles")
+}
+
+model CartItem {
+  id              String   @id @default(uuid()) @db.Uuid
+  storeCustomerId String?  @map("store_customer_id") @db.Uuid
+  sessionId       String?  @map("session_id") @db.VarChar(64)
+  productId       String   @map("product_id") @db.Uuid
+  quantidade      Int      @default(1)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  storeCustomer StoreCustomer? @relation(fields: [storeCustomerId], references: [id], onDelete: Cascade)
+  product       Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([storeCustomerId, productId])
+  @@unique([sessionId, productId])
+  @@index([sessionId])
+  @@map("cart_items")
+}
+
+model WishlistItem {
+  id              String   @id @default(uuid()) @db.Uuid
+  storeCustomerId String   @map("store_customer_id") @db.Uuid
+  productId       String   @map("product_id") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  storeCustomer StoreCustomer @relation(fields: [storeCustomerId], references: [id], onDelete: Cascade)
+  product       Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([storeCustomerId, productId])
+  @@map("wishlist_items")
+}
+
+model StoreOrder {
+  id              String      @id @default(uuid()) @db.Uuid
+  numero          Int         @unique @default(autoincrement())
+  storeCustomerId String?     @map("store_customer_id") @db.Uuid
+  status          OrderStatus @default(PENDENTE)
+  observacao      String?     @db.Text
+  subtotal        Decimal     @default(0) @db.Decimal(10, 2)
+  frete           Decimal     @default(0) @db.Decimal(10, 2)
+  desconto        Decimal     @default(0) @db.Decimal(10, 2)
+  total           Decimal     @default(0) @db.Decimal(10, 2)
+  entregaNome     String?     @map("entrega_nome") @db.VarChar(120)
+  entregaEmail    String?     @map("entrega_email") @db.VarChar(120)
+  entregaTelefone String?     @map("entrega_telefone") @db.VarChar(20)
+  entregaEndereco String?     @map("entrega_endereco") @db.VarChar(255)
+  entregaCidade   String?     @map("entrega_cidade") @db.VarChar(80)
+  entregaEstado   String?     @map("entrega_estado") @db.VarChar(2)
+  entregaCep      String?     @map("entrega_cep") @db.VarChar(10)
+  entregaPais     String?     @map("entrega_pais") @db.VarChar(60)
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  storeCustomer StoreCustomer? @relation(fields: [storeCustomerId], references: [id], onDelete: SetNull)
+  items         OrderItem[]
+  payments      Payment[]
+
+  @@index([storeCustomerId])
+  @@index([status])
+  @@map("store_orders")
+}
+
+model OrderItem {
+  id            String  @id @default(uuid()) @db.Uuid
+  orderId       String  @map("order_id") @db.Uuid
+  productId     String  @map("product_id") @db.Uuid
+  nomeSnapshot  String  @map("nome_snapshot") @db.VarChar(200)
+  precoUnitario Decimal @map("preco_unitario") @db.Decimal(10, 2)
+  quantidade    Int     @default(1)
+  subtotal      Decimal @default(0) @db.Decimal(10, 2)
+
+  order   StoreOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product    @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+model Payment {
+  id                 String        @id @default(uuid()) @db.Uuid
+  orderId            String        @map("order_id") @db.Uuid
+  metodo             PaymentMethod
+  status             PaymentStatus @default(PENDENTE)
+  valor              Decimal       @db.Decimal(10, 2)
+  referenciaExterna  String?       @map("referencia_externa") @db.VarChar(120)
+  mercadoPagoId      String?       @map("mercado_pago_id") @db.VarChar(120)
+  pixQrCode          String?       @map("pix_qr_code") @db.Text
+  pixCopiaCola       String?       @map("pix_copia_cola") @db.Text
+  metadata           Json?
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
+
+  order StoreOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([status])
+  @@map("payments")
+}
+
+// ============================================================
+// ORDEM DE SERVIÇO
+// ============================================================
+
+model ServiceOrder {
+  id                  String    @id @default(uuid()) @db.Uuid
+  numero              Int       @unique @default(autoincrement())
+  origem              OrigemOS  @default(OFICINA)
+  status              StatusOS  @default(ABERTA)
+  descricaoProblema   String    @map("descricao_problema") @db.Text
+  observacoes         String?   @db.Text
+  observacoesTecnicas String?   @map("observacoes_tecnicas") @db.Text
+  kmEntrada           Int?      @map("km_entrada")
+  previsaoEntrega     DateTime? @map("previsao_entrega")
+  dataFinalizacao     DateTime? @map("data_finalizacao")
+  valorMaoObra        Decimal   @default(0) @map("valor_mao_obra") @db.Decimal(10, 2)
+  valorPecas          Decimal   @default(0) @map("valor_pecas") @db.Decimal(10, 2)
+  valorTotal          Decimal   @default(0) @map("valor_total") @db.Decimal(10, 2)
+  desconto            Decimal   @default(0) @db.Decimal(10, 2)
+  valorFinal          Decimal   @default(0) @map("valor_final") @db.Decimal(10, 2)
+  motocicletaId       String?   @map("motocicleta_id") @db.Uuid
+  storeCustomerId     String?   @map("store_customer_id") @db.Uuid
+  mecanicoId          String?   @map("mecanico_id") @db.Uuid
+  atendenteId         String?   @map("atendente_id") @db.Uuid
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  motorcycle    Motorcycle?    @relation(fields: [motocicletaId], references: [id], onDelete: Restrict)
+  storeCustomer StoreCustomer? @relation(fields: [storeCustomerId], references: [id], onDelete: SetNull)
+  mecanico      User?          @relation("Mecanico", fields: [mecanicoId], references: [id], onDelete: SetNull)
+  atendente     User?          @relation("Atendente", fields: [atendenteId], references: [id], onDelete: SetNull)
+  parts         Part[]
+  products      ServiceOrderProduct[]
+  history       OSHistory[]
+
+  @@index([status])
+  @@index([origem])
+  @@index([motocicletaId])
+  @@index([storeCustomerId])
+  @@index([createdAt(sort: Desc)])
+  @@map("service_orders")
+}
+
+model ServiceOrderProduct {
+  id             String  @id @default(uuid()) @db.Uuid
+  serviceOrderId String  @map("service_order_id") @db.Uuid
+  productId      String  @map("product_id") @db.Uuid
+  quantidade     Int     @default(1)
+  precoUnitario  Decimal @map("preco_unitario") @db.Decimal(10, 2)
+
+  serviceOrder ServiceOrder @relation(fields: [serviceOrderId], references: [id], onDelete: Cascade)
+  product      Product      @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([serviceOrderId])
+  @@map("service_order_products")
+}
+
+model Part {
+  id             String   @id @default(uuid()) @db.Uuid
+  descricao      String   @db.VarChar(200)
+  quantidade     Decimal  @default(1) @db.Decimal(10, 3)
+  valorUnitario  Decimal  @map("valor_unitario") @db.Decimal(10, 2)
+  valorTotal     Decimal  @default(0) @map("valor_total") @db.Decimal(10, 2)
+  serviceOrderId String   @map("service_order_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  serviceOrder ServiceOrder @relation(fields: [serviceOrderId], references: [id], onDelete: Cascade)
+
+  @@index([serviceOrderId])
+  @@map("parts")
+}
+
+model OSHistory {
+  id             String    @id @default(uuid()) @db.Uuid
+  serviceOrderId String    @map("service_order_id") @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  statusAnterior StatusOS? @map("status_anterior")
+  statusNovo     StatusOS  @map("status_novo")
+  observacao     String?   @db.Text
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  serviceOrder ServiceOrder @relation(fields: [serviceOrderId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([serviceOrderId])
+  @@map("os_history")
 }

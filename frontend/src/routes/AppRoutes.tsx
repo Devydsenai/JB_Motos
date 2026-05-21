@@ -22,11 +22,19 @@ import {
 } from "@pages/admin/ClientesPage";
 import { LojaHomePage } from "@pages/store/LojaHomePage";
 import { MinhaContaPage } from "@pages/store/MinhaContaPage";
+import { FavoritosPage } from "@pages/store/FavoritosPage";
+import { CarrinhoPage } from "@pages/store/CarrinhoPage";
+import { ServicosLojaPage } from "@pages/store/ServicosLojaPage";
+import { ContatoLojaPage } from "@pages/store/ContatoLojaPage";
+import { CatalogoPage } from "@pages/store/CatalogoPage";
+import { OfertasPage } from "@pages/store/OfertasPage";
+import { CheckoutPage } from "@pages/store/CheckoutPage";
 
 export function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/admin" replace />} />
+      <Route path="/" element={<Navigate to="/loja" replace />} />
+      <Route path="/entrar" element={<Navigate to="/loja/minha-conta" replace />} />
 
       <Route path="/admin" element={<AdminTemplate />}>
         <Route index element={<DashboardPage />} />
@@ -62,6 +70,13 @@ export function AppRoutes() {
       <Route path="/loja" element={<StoreTemplate />}>
         <Route index element={<LojaHomePage />} />
         <Route path="minha-conta" element={<MinhaContaPage />} />
+        <Route path="favoritos" element={<FavoritosPage />} />
+        <Route path="carrinho" element={<CarrinhoPage />} />
+        <Route path="servicos" element={<ServicosLojaPage />} />
+        <Route path="contato" element={<ContatoLojaPage />} />
+        <Route path="catalogo" element={<CatalogoPage />} />
+        <Route path="ofertas" element={<OfertasPage />} />
+        <Route path="checkout" element={<CheckoutPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/admin" replace />} />

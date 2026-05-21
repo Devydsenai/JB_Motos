@@ -50,6 +50,7 @@ export function ConfiguracoesPage() {
     perfil,
     funcionarioId,
     administrador,
+    adminUser,
     setPerfil,
     setFuncionarioId,
     logout,
@@ -83,7 +84,8 @@ export function ConfiguracoesPage() {
 
   const nomeExibicao =
     perfil === "dono"
-      ? formatarNomeFuncionario(administrador.nome, administrador.sobrenome)
+      ? adminUser?.nome ??
+        formatarNomeFuncionario(administrador.nome, administrador.sobrenome)
       : funcionario
         ? formatarNomeFuncionario(funcionario.nome, funcionario.sobrenome)
         : "—";
@@ -123,7 +125,7 @@ export function ConfiguracoesPage() {
             <>
               <FieldRow>
                 <dt>E-mail</dt>
-                <dd>{administrador.email}</dd>
+                <dd>{adminUser?.email ?? administrador.email}</dd>
               </FieldRow>
               <FieldRow>
                 <dt>Telefone</dt>

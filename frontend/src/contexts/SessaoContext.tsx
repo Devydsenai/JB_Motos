@@ -13,23 +13,44 @@ import {
   perfilSistemaLabels,
   type PerfilSistema,
 } from "@/config/permissoes";
-import type { PerfilFuncionario } from "@/types/funcionario";
+import {
+  clearAllAuth,
+  readAdminAuth,
+  type AdminAuth,
+  type AdminRole,
+} from "@/services/authStorage";
 
-const STORAGE_PERFIL = "jb-motos-perfil-sistema";
 const STORAGE_SESSAO = "jb-motos-sessao";
 
-const FUNCIONARIO_PADRAO: Record<PerfilFuncionario, string> = {
-  atendente: "func-003",
-  mecanico: "func-002",
-};
+function roleToPerfil(role: AdminRole): PerfilSistema {
+  if (role === "PROPRIETARIO") return "dono";
+  if (role === "MECANICO") return "mecanico";
+  return "atendente";
+}
 
 type SessaoPersistida = {
   perfil: PerfilSistema;
   funcionarioId?: string;
+  userId?: string;
   logado: boolean;
 };
 
+function sessaoFromAdminAuth(auth: AdminAuth): SessaoPersistida {
+  const perfil = roleToPerfil(auth.user.role);
+  return {
+    perfil,
+    logado: true,
+    userId: auth.user.id,
+    funcionarioId: undefined,
+  };
+}
+
 function readSessao(): SessaoPersistida {
+  const admin = readAdminAuth();
+  if (admin?.token) {
+    return sessaoFromAdminAuth(admin);
+  }
+
   try {
     const raw = localStorage.getItem(STORAGE_SESSAO);
     if (raw) {
@@ -39,7 +60,8 @@ function readSessao(): SessaoPersistida {
         return {
           perfil,
           funcionarioId: parsed.funcionarioId,
-          logado: parsed.logado !== false,
+          userId: parsed.userId,
+          logado: false,
         };
       }
     }
@@ -47,28 +69,12 @@ function readSessao(): SessaoPersistida {
     /* ignore */
   }
 
-  const legado = localStorage.getItem(STORAGE_PERFIL);
-  const perfil =
-    legado === "atendente" || legado === "mecanico" || legado === "dono"
-      ? legado
-      : "dono";
-
-  return {
-    perfil,
-    funcionarioId:
-      perfil === "atendente"
-        ? FUNCIONARIO_PADRAO.atendente
-        : perfil === "mecanico"
-          ? FUNCIONARIO_PADRAO.mecanico
-          : undefined,
-    logado: true,
-  };
+  return { perfil: "dono", logado: false };
 }
 
 function persistirSessao(sessao: SessaoPersistida) {
   try {
     localStorage.setItem(STORAGE_SESSAO, JSON.stringify(sessao));
-    localStorage.setItem(STORAGE_PERFIL, sessao.perfil);
   } catch {
     /* ignore */
   }
@@ -77,10 +83,13 @@ function persistirSessao(sessao: SessaoPersistida) {
 type SessaoContextValue = {
   perfil: PerfilSistema;
   funcionarioId: string | null;
+  userId: string | null;
   logado: boolean;
+  adminUser: AdminAuth["user"] | null;
   administrador: typeof administradorMock;
   setPerfil: (perfil: PerfilSistema) => void;
   setFuncionarioId: (id: string | null) => void;
+  aplicarLoginAdmin: (auth: AdminAuth, funcionarioId?: string | null) => void;
   exigeCodigoFuncionario: boolean;
   podePularCodigoFuncionario: boolean;
   nomeRegistroSistema: string;
@@ -91,21 +100,30 @@ const SessaoContext = createContext<SessaoContextValue | null>(null);
 
 export function SessaoProvider({ children }: { children: ReactNode }) {
   const [sessao, setSessao] = useState<SessaoPersistida>(readSessao);
+  const [adminAuth, setAdminAuth] = useState<AdminAuth | null>(readAdminAuth);
 
   useEffect(() => {
-    persistirSessao(sessao);
+    if (sessao.logado) {
+      persistirSessao(sessao);
+    }
   }, [sessao]);
 
+  const aplicarLoginAdmin = useCallback(
+    (auth: AdminAuth, funcionarioId?: string | null) => {
+      setAdminAuth(auth);
+      setSessao({
+        ...sessaoFromAdminAuth(auth),
+        funcionarioId: funcionarioId ?? undefined,
+      });
+    },
+    [],
+  );
+
   const setPerfil = useCallback((novo: PerfilSistema) => {
-    setSessao(() => ({
+    setSessao((atual) => ({
+      ...atual,
       perfil: novo,
-      logado: true,
-      funcionarioId:
-        novo === "atendente"
-          ? FUNCIONARIO_PADRAO.atendente
-          : novo === "mecanico"
-            ? FUNCIONARIO_PADRAO.mecanico
-            : undefined,
+      logado: atual.logado,
     }));
   }, []);
 
@@ -118,29 +136,39 @@ export function SessaoProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
-    try {
-      localStorage.removeItem(STORAGE_SESSAO);
-      localStorage.removeItem(STORAGE_PERFIL);
-    } catch {
-      /* ignore */
-    }
-    window.location.href = "/loja";
+    clearAllAuth();
+    setAdminAuth(null);
+    setSessao({ perfil: "dono", logado: false });
+    window.location.href = "/loja/minha-conta";
   }, []);
+
+  const nomeRegistroSistema = useMemo(() => {
+    if (adminAuth?.user) {
+      if (adminAuth.user.role === "PROPRIETARIO") {
+        return adminAuth.user.nome || perfilSistemaLabels.dono;
+      }
+      return adminAuth.user.nome;
+    }
+    return perfilSistemaLabels[sessao.perfil];
+  }, [adminAuth, sessao.perfil]);
 
   const value = useMemo<SessaoContextValue>(
     () => ({
       perfil: sessao.perfil,
       funcionarioId: sessao.funcionarioId ?? null,
-      logado: sessao.logado,
+      userId: sessao.userId ?? adminAuth?.user.id ?? null,
+      logado: sessao.logado && Boolean(adminAuth?.token),
+      adminUser: adminAuth?.user ?? null,
       administrador: administradorMock,
       setPerfil,
       setFuncionarioId,
+      aplicarLoginAdmin,
       exigeCodigoFuncionario: calcExigeCodigo(sessao.perfil),
       podePularCodigoFuncionario: sessao.perfil === "dono",
-      nomeRegistroSistema: perfilSistemaLabels.dono,
+      nomeRegistroSistema,
       logout,
     }),
-    [sessao, setPerfil, setFuncionarioId, logout],
+    [sessao, adminAuth, setPerfil, setFuncionarioId, aplicarLoginAdmin, nomeRegistroSistema, logout],
   );
 
   return (

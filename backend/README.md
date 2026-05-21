@@ -1,91 +1,81 @@
-# JB Motos — Backend
+# JB Motos — Backend API
 
-Base do banco com **Supabase (PostgreSQL)** e **Prisma ORM v7**, preparada para a equipe evoluir o schema depois.
+API REST para o painel administrativo e a loja online da JB Motos (oficina de motos — peças e serviços).
 
-No momento existe apenas a tabela **`teste`** para validar conexão e migrations.
+## Stack
 
-## Pré-requisitos
-
-- Node.js **20.19+** (recomendado 22.x)
-- Projeto Supabase já criado
+- Node.js 20+
+- TypeScript
+- Express 5
+- Prisma 7 + PostgreSQL (Supabase)
+- Zod (validação)
+- JWT (auth admin e loja)
 
 ## Configuração
 
-1. Entre na pasta:
-
-   ```bash
-   cd backend
-   ```
-
-2. Instale dependências:
-
-   ```bash
-   npm install
-   ```
-
-3. Copie o exemplo de variáveis:
-
-   ```bash
-   copy .env.example .env
-   ```
-
-4. No [Supabase Dashboard](https://supabase.com/dashboard) → **Connect**, preencha no `.env`:
-
-   | Variável | Uso |
-   |----------|-----|
-   | `DATABASE_URL` | Porta **6543** + `?pgbouncer=true` — runtime (Prisma Client) |
-   | `DIRECT_URL` | Porta **5432** — migrations (`prisma migrate`) |
-
-   Troque `[PROJECT-REF]`, `[SENHA]` e `[REGIAO]` pelos valores do seu projeto.
-
-   **Importante:** `DIRECT_URL` é obrigatória para `db:migrate` e `db:migrate:deploy`. Sem ela, as migrations não sobem no Supabase.
-
-## Comandos
-
-| Comando | Descrição |
-|---------|-----------|
-| `npm run db:generate` | Gera o client em `generated/prisma` |
-| `npm run db:migrate:deploy` | Aplica migrations no Supabase (CI/produção) |
-| `npm run db:migrate` | Cria/aplica migration em desenvolvimento |
-| `npm run db:test` | Testa leitura da tabela `teste` |
-| `npm run db:studio` | Abre Prisma Studio |
-
-## Primeira subida (equipe)
-
-Com o `.env` configurado:
+1. Copie `.env.example` para `.env` e preencha `DATABASE_URL`, `DIRECT_URL` e `JWT_SECRET` (mín. 32 caracteres).
+2. Instale dependências e gere o client:
 
 ```bash
+cd backend
+npm install
 npm run db:generate
-npm run db:migrate:deploy
+npm run db:push
+npm run db:seed
 ```
 
-Para inserir um registro de teste manualmente no SQL Editor do Supabase:
-
-```sql
-INSERT INTO teste (nome) VALUES ('JB Motos - teste OK');
-```
-
-Depois:
+3. Desenvolvimento:
 
 ```bash
-npm run db:test
+npm run dev
 ```
 
-## Prisma 7 + Supabase
+A API sobe em `http://localhost:3001` — health: `GET /health`, rotas: `/api/v1/*`.
 
-- **v7.2+** corrige o fluxo de URL nas migrations; este projeto usa Prisma 7 com `prisma.config.ts`.
-- Migrations usam `DIRECT_URL` (porta 5432).
-- A aplicação usa `DATABASE_URL` (pooler 6543) com `@prisma/adapter-pg`.
-- Não crie outras tabelas neste repositório até a equipe definir o modelo — apenas estenda `prisma/schema.prisma` e rode `npm run db:migrate`.
+## Credenciais iniciais (seed)
 
-## Estrutura
+| Área | E-mail | Senha | Código serviço |
+|------|--------|-------|----------------|
+| Proprietário | proprietario@jbmotos.com | JBMotos@2024 | — |
+| Atendente | atendente@jbmotos.com | JBMotos@2024 | 1001 |
+| Mecânico | mecanico@jbmotos.com | JBMotos@2024 | 1002 |
+| Cliente loja | cliente@jbmotos.com | Cliente@2024 | — |
 
-```
-backend/
-├── prisma/
-│   ├── schema.prisma      # model Teste → tabela teste
-│   └── migrations/
-├── prisma.config.ts       # CLI aponta para DIRECT_URL
-├── src/lib/prisma.ts      # client com adapter pg
-└── generated/prisma/      # gerado por npm run db:generate (não versionar)
-```
+## Módulos
+
+### Administrativo (Bearer token admin)
+
+- `POST /api/v1/auth/login` — login funcionários
+- `GET /api/v1/users/lookup/:codigo` — busca por código de serviço
+- `CRUD /api/v1/users` — funcionários + RH (proprietário)
+- `CRUD /api/v1/clients`, `/motorcycles`, `/service-orders`, `/parts`
+- `CRUD /api/v1/products`, `/suppliers`, `/stock`
+
+### Loja (token store ou sessão)
+
+- `POST /api/v1/store/customers/register|login`
+- `GET /api/v1/products/store` — catálogo público
+- `CRUD /api/v1/store/cart` — carrinho (login ou `sessionId`)
+- `CRUD /api/v1/store/wishlist` — favoritos (login)
+- `POST /api/v1/store/orders` — checkout
+- `POST /api/v1/store/payments` — PIX/cartão (mock + pronto Mercado Pago)
+- `POST /api/v1/service-orders/store` — solicitar serviço online
+
+## Pagamentos (Mercado Pago)
+
+O módulo `payments` grava referência externa, QR PIX mock e campo `mercadoPagoId`. Configure `MERCADO_PAGO_ACCESS_TOKEN` no `.env` quando integrar o simulador/produção. Webhook: `POST /api/v1/store/payments/webhook`.
+
+## Histórico
+
+A pasta `backend` anterior continha apenas a tabela `teste` (placeholder). O schema atual substitui essa base por domínios completos: RH, estoque, loja, pedidos e OS.
+
+## Scripts
+
+| Script | Descrição |
+|--------|-----------|
+| `npm run dev` | Servidor com hot reload |
+| `npm run build` | Compila TypeScript |
+| `npm run db:generate` | Gera Prisma Client |
+| `npm run db:push` | Sincroniza schema no banco |
+| `npm run db:seed` | Dados iniciais |
+| `npm run db:test` | Testa conexão |

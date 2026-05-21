@@ -1,0 +1,1 @@
+export { CarrinhoPage } from "./CarrinhoPage";

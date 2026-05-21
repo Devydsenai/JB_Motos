@@ -1,0 +1,1 @@
+export { ServicosLojaPage } from "./ServicosLojaPage";

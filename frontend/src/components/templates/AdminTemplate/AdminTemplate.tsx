@@ -1,4 +1,5 @@
 import { Outlet } from "react-router-dom";
+import { AdminAuthGuard } from "@/components/auth/AdminAuthGuard";
 import styled from "styled-components";
 import { AdminSidebar } from "@components/organisms/AdminSidebar";
 import { AdminHeader } from "@components/organisms/AdminHeader";
@@ -40,7 +41,9 @@ export function AdminTemplate() {
           <Main>
             <AdminHeader />
             <Content>
-              <Outlet />
+              <AdminAuthGuard>
+                <Outlet />
+              </AdminAuthGuard>
             </Content>
           </Main>
         </Layout>

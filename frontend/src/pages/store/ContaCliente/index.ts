@@ -1,0 +1,1 @@
+export { ContaCliente } from "./ContaCliente";
