@@ -1,0 +1,11 @@
+# Deploy Netlify — JB Motos (React + Vite)
+# Se o repositório na Netlify apontar para a pasta frontend, este arquivo é lido automaticamente.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
