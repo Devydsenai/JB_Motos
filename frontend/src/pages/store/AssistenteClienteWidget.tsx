@@ -183,6 +183,21 @@ function isGenericWelcome(reply: string) {
   );
 }
 
+/** n8n às vezes devolve sempre a oferta de óleo, mesmo em "Cancelar" ou "oi". */
+function isN8nStuckOnOil(reply: string, userMessage: string) {
+  const replyN = normalizeText(reply);
+  const userN = normalizeText(userMessage);
+  const userAskedOil =
+    userN.includes("oleo") ||
+    userN.includes("troca de oleo") ||
+    userN.includes("confirmo troca");
+  if (userAskedOil) return false;
+  return (
+    replyN.includes("troca de oleo") &&
+    (replyN.includes("adicionar ao carrinho") || replyN.includes("deseja adicionar"))
+  );
+}
+
 function getSessionId() {
   try {
     const current = localStorage.getItem(STORAGE_SESSION);
@@ -309,6 +324,16 @@ export function AssistenteClienteWidget() {
       return "Tudo bem, cancelei essa solicitação. Posso te ajudar com outro serviço, ofertas ou formas de pagamento.";
     }
 
+    if (
+      normalized.includes("outros servico") ||
+      normalized.includes("ver outros") ||
+      normalized.includes("outra opcao")
+    ) {
+      setPendingService(null);
+      setQuickReplies(LOCAL_SERVICES.map((service) => service.nome));
+      return "Sem problema. Qual destes serviços você precisa?";
+    }
+
     if (pendingService && isConfirmation(content)) {
       const protocol = createServiceRequest(
         {
@@ -389,6 +414,16 @@ export function AssistenteClienteWidget() {
     setLoading(true);
     setMessages((current) => [...current, { role: "user", text: content }]);
 
+    const localFirst = buildLocalServiceReply(content);
+    if (localFirst) {
+      setMessages((current) => [
+        ...current,
+        { role: "assistant", text: localFirst },
+      ]);
+      setLoading(false);
+      return;
+    }
+
     try {
       const data = await enviarMensagemAssistenteCliente({
         sessionId,
@@ -398,16 +433,28 @@ export function AssistenteClienteWidget() {
       });
 
       const reply = getReply(data);
-      const localReply = isGenericWelcome(reply) ? buildLocalServiceReply(content) : null;
       const createdByAction = applyActions(data.actions);
+
+      let assistantText = reply;
+      if (isN8nStuckOnOil(reply, content)) {
+        assistantText =
+          buildLocalServiceReply(content) ??
+          "Olá! Posso ajudar com serviços, ofertas, pagamento ou carrinho. O que você precisa?";
+        setQuickReplies(["Ver serviços", "Ver ofertas", "Formas de pagamento"]);
+      } else if (isGenericWelcome(reply)) {
+        const alt = buildLocalServiceReply(content);
+        if (alt) assistantText = alt;
+        else setQuickReplies(data.quickReplies ?? []);
+      } else {
+        setQuickReplies(data.quickReplies ?? []);
+      }
 
       if (!createdByAction) {
         setMessages((current) => [
           ...current,
-          { role: "assistant", text: localReply ?? reply },
+          { role: "assistant", text: assistantText },
         ]);
       }
-      if (!localReply) setQuickReplies(data.quickReplies ?? []);
     } catch (err) {
       const localReply = buildLocalServiceReply(content);
       if (localReply) {
