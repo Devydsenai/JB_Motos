@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { app } from "./app.js";
 import { env } from "./config/env.js";
+import { getAllowedOrigins } from "./config/cors.js";
 import { prisma } from "./prisma/client.js";
 
 const startServer = async () => {
@@ -8,6 +9,7 @@ const startServer = async () => {
     // Verifica conexão com banco antes de subir
     await prisma.$queryRaw`SELECT 1`;
     console.log("✅ Banco de dados conectado");
+    console.log("🌐 CORS origens:", getAllowedOrigins().join(", "));
 
     app.listen(env.PORT, () => {
       console.log(`
