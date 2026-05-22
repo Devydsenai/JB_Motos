@@ -32,6 +32,8 @@ FRONTEND_URL=https://seu-frontend.com
 API_PUBLIC_URL=https://sua-api.onrender.com
 MERCADO_PAGO_ACCESS_TOKEN=...
 MERCADO_PAGO_SANDBOX=false
+N8N_CLIENT_ASSISTANT_URL=https://devyds.app.n8n.cloud/webhook/jb-motos/assistente-cliente
+N8N_ADMIN_ASSISTANT_URL=https://devyds.app.n8n.cloud/webhook/jb-motos/assistente-administrativo
 ```
 
 Não defina `PORT` manualmente — o Render injeta automaticamente.

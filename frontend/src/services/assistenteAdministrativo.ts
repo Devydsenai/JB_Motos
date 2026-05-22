@@ -17,14 +17,21 @@ export type AssistenteAdministrativoResponse = {
   data?: Record<string, unknown>;
 };
 
+import { postAssistenteViaApi } from "./assistenteProxy";
+
 const ASSISTENTE_ADMIN_URL = import.meta.env.VITE_N8N_ADMIN_ASSISTANT_URL;
+const USE_API_PROXY = Boolean(import.meta.env.VITE_API_URL);
 
 export async function enviarMensagemAssistenteAdministrativo(
   payload: AssistenteAdministrativoRequest,
 ): Promise<AssistenteAdministrativoResponse> {
+  if (USE_API_PROXY) {
+    return postAssistenteViaApi<AssistenteAdministrativoResponse>("/admin", payload);
+  }
+
   if (!ASSISTENTE_ADMIN_URL) {
     throw new Error(
-      "Configure VITE_N8N_ADMIN_ASSISTANT_URL no .env do frontend.",
+      "Configure VITE_N8N_ADMIN_ASSISTANT_URL ou VITE_API_URL no .env do frontend.",
     );
   }
 

@@ -13,6 +13,7 @@ import { cartRoutes } from "../modules/cart/cart.routes.js";
 import { wishlistRoutes } from "../modules/wishlist/wishlist.routes.js";
 import { ordersRoutes } from "../modules/orders/orders.routes.js";
 import { paymentsRoutes } from "../modules/payments/payments.routes.js";
+import { assistantsRoutes } from "../modules/assistants/assistants.routes.js";
 
 const router = Router();
 
@@ -30,5 +31,6 @@ router.use("/store/cart", cartRoutes);
 router.use("/store/wishlist", wishlistRoutes);
 router.use("/store/orders", ordersRoutes);
 router.use("/store/payments", paymentsRoutes);
+router.use("/assistants", assistantsRoutes);
 
 export { router as apiRoutes };

@@ -30,3 +30,7 @@ services:
         sync: false
       - key: MERCADO_PAGO_SANDBOX
         value: "false"
+      - key: N8N_CLIENT_ASSISTANT_URL
+        sync: false
+      - key: N8N_ADMIN_ASSISTANT_URL
+        sync: false

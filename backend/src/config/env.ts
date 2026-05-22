@@ -17,6 +17,8 @@ const envSchema = z.object({
     .enum(["true", "false"])
     .optional()
     .transform((v) => (v === undefined ? undefined : v === "true")),
+  N8N_CLIENT_ASSISTANT_URL: z.string().url().optional(),
+  N8N_ADMIN_ASSISTANT_URL: z.string().url().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
