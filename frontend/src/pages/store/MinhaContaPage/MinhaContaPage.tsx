@@ -6,7 +6,7 @@ import logo from "@components/atoms/assets/Logo.JBmotos.svg";
 import { funcionariosMock } from "@/data/mockFuncionarios";
 import type { PerfilSistema } from "@/config/permissoes";
 import { loginUnificado } from "@/services/auth";
-import { saveAdminAuth } from "@/services/authStorage";
+import { clearAllAuth, saveAdminAuth } from "@/services/authStorage";
 import { ContaCliente } from "../ContaCliente";
 import { StoreAccountLink } from "../StoreAccountLink";
 import { StoreFooter } from "../StoreFooter";
@@ -49,6 +49,13 @@ export function MinhaContaPage() {
     window.setTimeout(() => setToast(""), 2600);
   };
 
+  const handleLogout = () => {
+    clearAllAuth();
+    setLoginError("");
+    showToast("Você saiu da sua conta.");
+    navigate("/loja/minha-conta", { replace: true });
+  };
+
   const handleLogin = async ({ email, senha }: LoginCredentials) => {
     setLoginError("");
     setLoginLoading(true);
@@ -78,8 +85,10 @@ export function MinhaContaPage() {
         return;
       }
 
-      showToast("Login realizado. Bem-vindo à sua conta!");
-      navigate(result.redirectTo, { replace: true });
+      showToast("Login realizado. Bem-vindo!");
+      navigate(state?.from?.startsWith("/loja") ? state.from : result.redirectTo, {
+        replace: true,
+      });
     } catch (err) {
       setLoginError(
         err instanceof Error ? err.message : "Não foi possível entrar. Verifique e-mail e senha.",
@@ -128,6 +137,7 @@ export function MinhaContaPage() {
 
       <ContaCliente
         onLogin={handleLogin}
+        onLogout={handleLogout}
         loginLoading={loginLoading}
         loginError={loginError}
         onCadastro={() => showToast("Cadastro do cliente salvo para teste.")}

@@ -5,7 +5,7 @@ export const LoginHint = styled.p`
   padding: 0.65rem 0.75rem;
   font-size: 0.78rem;
   line-height: 1.45;
-  color: #374151;
+  color: ${({ theme }) => (theme.mode === "light" ? "#374151" : "#e5e5e5")};
   background: rgba(196, 30, 30, 0.08);
   border-left: 3px solid #c41e1e;
 `;
@@ -23,22 +23,24 @@ export const LoginForm = styled.form`
 
   > span {
     font-size: 0.78rem;
-    color: #222;
+    color: ${({ theme }) => (theme.mode === "light" ? "#222" : "#d4d4d4")};
   }
 
   label {
     display: grid;
     grid-template-columns: 1fr;
     gap: 0.45rem;
-    color: #6b7280;
+    color: ${({ theme }) => (theme.mode === "light" ? "#6b7280" : "#a3a3a3")};
     font-size: 0.78rem;
     font-weight: 500;
   }
 
   input {
-    border: 1.5px solid rgba(0, 0, 0, 0.28);
-    background: #fbfbfb;
-    color: #111;
+    border: 1.5px solid
+      ${({ theme }) =>
+        theme.mode === "light" ? "rgba(0, 0, 0, 0.28)" : "rgba(255, 255, 255, 0.34)"};
+    background: ${({ theme }) => (theme.mode === "light" ? "#fbfbfb" : "#121212")};
+    color: ${({ theme }) => (theme.mode === "light" ? "#111" : "#fff")};
     border-radius: 0;
     padding: 0.72rem 0.8rem;
     font-size: 0.9rem;
@@ -47,7 +49,7 @@ export const LoginForm = styled.form`
       border-color: #c41e1e;
       box-shadow: 0 0 0 3px rgba(196, 30, 30, 0.16);
       outline: none;
-      background: #fff;
+      background: ${({ theme }) => (theme.mode === "light" ? "#fff" : "#171717")};
     }
   }
 
@@ -56,6 +58,7 @@ export const LoginForm = styled.form`
     align-items: center;
     gap: 1rem;
     margin-top: 0.25rem;
+    flex-wrap: wrap;
   }
 
   button {
@@ -76,7 +79,7 @@ export const LoginForm = styled.form`
   }
 
   a {
-    color: #222;
+    color: ${({ theme }) => (theme.mode === "light" ? "#222" : "#d4d4d4")};
     text-decoration: none;
     font-size: 0.78rem;
 

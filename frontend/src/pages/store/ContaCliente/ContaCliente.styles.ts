@@ -11,9 +11,12 @@ const slideUp = keyframes`
   }
 `;
 
+const borderColor = ({ theme }: { theme: { mode: string } }) =>
+  theme.mode === "light" ? "#e5e7eb" : "rgba(255, 255, 255, 0.14)";
+
 export const AccountPage = styled.div`
-  background: #fff;
-  color: #111;
+  background: ${({ theme }) => (theme.mode === "light" ? "#fff" : "#080808")};
+  color: ${({ theme }) => (theme.mode === "light" ? "#111" : "#fff")};
   padding: 2rem;
   min-height: 100vh;
 
@@ -28,10 +31,10 @@ export const Breadcrumb = styled.div`
   gap: 0.5rem;
   font-size: 0.78rem;
   margin-bottom: 2rem;
-  color: #111;
+  color: ${({ theme }) => (theme.mode === "light" ? "#111" : "#e5e5e5")};
 
   span:first-child {
-    color: #444;
+    color: ${({ theme }) => (theme.mode === "light" ? "#444" : "#a3a3a3")};
   }
 `;
 
@@ -54,10 +57,54 @@ export const AccountGrid = styled.div`
 `;
 
 export const Panel = styled.section`
-  border: 1px solid #e5e7eb;
-  border-top: 3px solid #111;
+  border: 1px solid ${borderColor};
+  border-top: 3px solid ${({ theme }) => (theme.mode === "light" ? "#111" : "#c41e1e")};
   min-height: 255px;
   padding: 1.7rem 1.9rem;
+  background: ${({ theme }) => (theme.mode === "light" ? "#fff" : "#111")};
+`;
+
+export const LoggedInPanel = styled(Panel)`
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+
+  h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: ${({ theme }) => (theme.mode === "light" ? "#6b7280" : "#a3a3a3")};
+    line-height: 1.5;
+  }
+`;
+
+export const LoggedInActions = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 0.25rem;
+`;
+
+export const OutlineBtn = styled.button`
+  border: 1px solid ${borderColor};
+  background: transparent;
+  color: inherit;
+  min-height: 34px;
+  padding: 0 1rem;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+
+  &:hover {
+    border-color: #c41e1e;
+    color: #c41e1e;
+  }
 `;
 
 export const NewCustomer = styled(Panel)`
@@ -101,11 +148,13 @@ export const RedBtn = styled.button`
 `;
 
 export const RegisterPanel = styled.section`
-  border: 1px solid #e5e7eb;
-  border-top: 3px solid #111;
+  border: 1px solid ${borderColor};
+  border-top: 3px solid ${({ theme }) => (theme.mode === "light" ? "#111" : "#c41e1e")};
   min-height: 330px;
   padding: 1.6rem 1.9rem;
   animation: ${slideUp} 0.28s ease both;
+  background: ${({ theme }) => (theme.mode === "light" ? "#fff" : "#111")};
+  color: inherit;
 `;
 
 export const RegisterSplit = styled.div`
@@ -120,14 +169,14 @@ export const RegisterSplit = styled.div`
 `;
 
 export const MotoPrompt = styled.aside`
-  border: 1px solid #e5e7eb;
+  border: 1px solid ${borderColor};
   padding: 1.25rem;
-  background: #fafafa;
+  background: ${({ theme }) => (theme.mode === "light" ? "#fafafa" : "#151515")};
 
   p {
     margin: 0 0 0.65rem;
     font-size: 0.78rem;
-    color: #6b7280;
+    color: ${({ theme }) => (theme.mode === "light" ? "#6b7280" : "#a3a3a3")};
     line-height: 1.45;
   }
 
@@ -149,7 +198,7 @@ export const RegisterHead = styled.div`
   button {
     border: none;
     background: transparent;
-    color: #111;
+    color: inherit;
     text-transform: uppercase;
     font-size: 0.7rem;
     font-weight: 800;

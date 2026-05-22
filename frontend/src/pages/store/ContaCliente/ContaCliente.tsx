@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { readStoreAuth } from "@/services/authStorage";
 import { CadastroCliente } from "../CadastroCliente";
 import { LoginCliente, type LoginCredentials } from "../LoginCliente";
 import { MotoCliente } from "../MotoCliente";
@@ -6,8 +8,11 @@ import {
   AccountGrid,
   AccountPage,
   Breadcrumb,
+  LoggedInActions,
+  LoggedInPanel,
   MotoPrompt,
   NewCustomer,
+  OutlineBtn,
   Panel,
   RedBtn,
   RegisterHead,
@@ -18,6 +23,7 @@ import {
 
 type ContaClienteProps = {
   onLogin: (credentials: LoginCredentials) => void | Promise<void>;
+  onLogout: () => void;
   onCadastro: () => void;
   onCadastroMoto: () => void;
   loginLoading?: boolean;
@@ -26,6 +32,7 @@ type ContaClienteProps = {
 
 export function ContaCliente({
   onLogin,
+  onLogout,
   onCadastro,
   onCadastroMoto,
   loginLoading,
@@ -33,6 +40,37 @@ export function ContaCliente({
 }: ContaClienteProps) {
   const [cadastroAberto, setCadastroAberto] = useState(false);
   const [motoAberta, setMotoAberta] = useState(false);
+  const storeAuth = readStoreAuth();
+
+  if (storeAuth && !cadastroAberto) {
+    return (
+      <AccountPage>
+        <Breadcrumb>
+          <span>Início</span>
+          <span>›</span>
+          <strong>Conta</strong>
+        </Breadcrumb>
+
+        <Title>Minha conta</Title>
+
+        <LoggedInPanel>
+          <h3>Olá, {storeAuth.customer.nome}</h3>
+          <p>Você está conectado como {storeAuth.customer.email}.</p>
+          <LoggedInActions>
+            <RedBtn as={Link} to="/loja">
+              Ir para o início
+            </RedBtn>
+            <OutlineBtn as={Link} to="/loja/favoritos">
+              Favoritos
+            </OutlineBtn>
+            <OutlineBtn type="button" onClick={onLogout}>
+              Sair da conta
+            </OutlineBtn>
+          </LoggedInActions>
+        </LoggedInPanel>
+      </AccountPage>
+    );
+  }
 
   return (
     <AccountPage>

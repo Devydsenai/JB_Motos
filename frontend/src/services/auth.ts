@@ -58,6 +58,6 @@ export async function loginUnificado(
 
   return {
     tipo: "cliente",
-    redirectTo: "/loja/minha-conta",
+    redirectTo: "/loja",
   };
 }
